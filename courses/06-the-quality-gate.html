@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 6 of 6. Coverage is the wrong gate. Build the right one: mutation score on the diff, assertion presence, no assertion-free tests, a flakiness budget, and a filter chain for generated tests.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="The quality gate - learn ai qa with phoebe">
+<meta property="og:description" content="Session 6 of 6. The finale. Write the gate your team can actually run on Monday, and demote coverage to the one job it is good at.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/06-the-quality-gate.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The quality gate - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 6 of 6. Build the gate. Demote coverage. Make green mean something.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 6 · The quality gate - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 6 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 6 of 6</div>
+    <h1>The quality <span class="accent">gate</span></h1>
+    <p class="sub">You already know coverage is the wrong gate. That was session 1, and the evidence has only piled up since. Tonight is the part that actually changes your Monday: deciding what the right gate is, picking numbers you can defend, and writing it into CI in a form that survives contact with a busy team. By the end of the 45 minutes the suite you have been building for six weeks has a rule attached to it, and green finally means something.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Hands-on</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Bring your CI config, not just your module</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Where six sessions landed</span>
+      <span class="a2" style="flex:4">3-18 · What to gate on, what to demote</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: write the gate</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers what to gate on</span>
+      <h2>Four signals, and not one of them is a percentage of lines</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">A gate is a promise about what cannot get in. Coverage makes a promise nobody can keep, because a line running is not a line being checked, and Inozemtseva and Holmes said so in the plainest possible terms: coverage "should not be used as a quality target because it is not a good indicator of test suite effectiveness". Everything you have measured over five sessions collapses instead into four signals that are cheap to compute and hard to fake.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The gate is four stacked signals: mutation score on the diff, assertion presence, no new assertion-free tests, and a flakiness budget">
+        <style>
+          .q6aH { font: 800 13px Inter, sans-serif; fill: #14532D; }
+          .q6aL { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q6aR { font: 800 12px Inter, sans-serif; fill: #15803D; }
+          .q6aN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q6aH" x="60" y="30">The gate, built out of what you already measured</text>
+        <rect x="60" y="44" width="760" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6aL" x="78" y="71">1 · Mutation score on the changed lines only</text>
+        <text class="q6aR" x="800" y="71" text-anchor="end">60 percent to start</text>
+        <rect x="60" y="96" width="760" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6aL" x="78" y="123">2 · Every new test asserts on a value</text>
+        <text class="q6aR" x="800" y="123" text-anchor="end">no exceptions</text>
+        <rect x="60" y="148" width="760" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6aL" x="78" y="175">3 · No new assertion-free test enters the suite</text>
+        <text class="q6aR" x="800" y="175" text-anchor="end">hard block</text>
+        <rect x="60" y="200" width="760" height="44" rx="8" fill="#E1EBE4" stroke="#5F7268" stroke-width="1.5"/>
+        <text class="q6aL" x="78" y="227">4 · Flakiness stays inside a written budget</text>
+        <text class="q6aR" x="800" y="227" text-anchor="end" fill="#5F7268">1.5 percent of runs</text>
+        <text class="q6aN" x="60" y="278">Three of the four block a merge. The fourth is a budget you watch, because flakes are never zero.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a gate is what cannot get in, not a number on a dashboard</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The four signals, with starting numbers<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>These numbers are starting points, not laws. Pick them, run them for a month, and move them based on what they actually catch and what they actually cost you. A threshold nobody has tuned is a threshold nobody believes.</p>
+        <table class="clean">
+          <tr><th>Signal</th><th>Start at</th><th>Why that number</th></tr>
+          <tr><td>Mutation score on the diff</td><td>60 percent</td><td>Low enough to pass on day one, high enough that an assertion-free test cannot reach it. Raise it 5 points a quarter until it hurts, then stop.</td></tr>
+          <tr><td>Assertion presence</td><td>Every test</td><td>Zhang and Mesbah found the assertion count strongly correlates with effectiveness. This is the cheapest check you own.</td></tr>
+          <tr><td>New assertion-free tests</td><td>Zero</td><td>Old ones can stay. The gate is about what enters, otherwise nobody can merge until a backlog is cleared and the gate gets switched off.</td></tr>
+          <tr><td>Flakiness budget</td><td>1.5 percent of runs</td><td>Google's measured continual rate. If you are well above it you have a signal problem before you have a coverage problem.</td></tr>
+        </table>
+        <div class="callout tip">
+          <p><strong>Gate on the diff, not the codebase.</strong> This is the single decision that makes the whole thing survivable. Google's mutation work took a changelist from a median of 820 mutants down to 7 by filtering hard, and 7 is a number a reviewer will read. 820 is a number a reviewer will mute.</p>
+        </div>
+      </div>
+    </details>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>A gate you can pass by executing code without checking it rewards exactly the tests you least want. The failure mode is never that someone games it on purpose. It is that a generator produces forty tests, they all execute code, the coverage bar goes green, everyone is relieved, and nobody looks again. Google's own mutation paper names the mechanism: coverage "might be misleading, in particular when program statements are covered but the expected program outcome is not asserted upon".</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers keeping coverage, demoted</span>
+      <h2>Coverage keeps its job, it just stops being the target</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Deleting the coverage report is the wrong move, and Google's own wording says why. The claim is asymmetric: a high number proves nothing, a low number proves something real. Keep the half that works.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Coverage bands of 60, 75 and 90 percent shown as a floor detector, where only the region below 60 percent carries information">
+        <style>
+          .q6bH { font: 800 13px Inter, sans-serif; fill: #14201A; }
+          .q6bT { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q6bB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q6bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q6bH" x="60" y="52">Only the left band of this bar tells you anything at all</text>
+        <rect x="80" y="76" width="432" height="46" rx="6" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <rect x="512" y="76" width="108" height="46" fill="#FEF0E7"/>
+        <rect x="620" y="76" width="108" height="46" fill="#BBF7D0"/>
+        <rect x="728" y="76" width="72" height="46" rx="6" fill="#22C55E"/>
+        <text class="q6bT" x="96" y="105" fill="#991B1B">Below 60: large areas going completely untested</text>
+        <text class="q6bB" x="512" y="142" text-anchor="middle">60 acceptable</text>
+        <text class="q6bB" x="620" y="142" text-anchor="middle">75 commendable</text>
+        <text class="q6bB" x="728" y="142" text-anchor="middle">90 exemplary</text>
+        <rect x="80" y="166" width="350" height="76" rx="10" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q6bB" x="98" y="192" fill="#3A1503">High coverage guarantees nothing.</text>
+        <text class="q6bB" x="98" y="212" fill="#3A1503">Fowler: 100 percent smells of tests</text>
+        <text class="q6bB" x="98" y="232" fill="#3A1503">written to make the numbers happy.</text>
+        <rect x="450" y="166" width="350" height="76" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6bB" x="468" y="192" fill="#14532D">Low coverage does guarantee that</text>
+        <text class="q6bB" x="468" y="212" fill="#14532D">large areas are untested. That is</text>
+        <text class="q6bB" x="468" y="232" fill="#14532D">the only claim the number can make.</text>
+        <text class="q6bN" x="60" y="278">Keep the number, watch the floor, stop calling it a target. The gate lives elsewhere.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a floor detector, not a scoreboard</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The demotion, in three sentences you can say in a standup<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>One: coverage stays on the dashboard and stays reported, because "a low code coverage number does guarantee that large areas of the product are going completely untested". Two: it stops being a merge condition, because "a high code coverage percentage does not guarantee high quality in the test coverage". Three: the merge condition moves to mutation score on the diff, which measures whether a change would be noticed.</p>
+        <p>If someone wants a coverage rule anyway, give them the floor rather than the target: alert when a module drops below 60, and never celebrate a module for reaching 90. Google's own note is that "the gains of increasing code coverage beyond a certain point are logarithmic", which is a polite way of saying the last stretch is where the worthless tests live.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The closing argument, for the meeting where someone wants 100 percent<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Fowler's line does the work: 100 percent "smells of someone writing tests to make the coverage numbers happy, but not thinking about what they are doing", and "high coverage numbers are too easy to reach with low quality testing".</p>
+        <p>He quotes Brian Marick, and this is the sentence to end on, because it separates the two people in the room without insulting either: <strong>"I expect a high level of coverage. Sometimes managers require one. There's a subtle difference."</strong></p>
+        <p>The practical version of that distinction is a config change: coverage keeps reporting and gains an alert below 60, and the line that says <span class="mono">fail_under</span> moves off coverage and onto mutation score. Same file, same amount of CI, a completely different promise.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers making it survivable in CI</span>
+      <h2>Mutation testing survives CI only if you shrink it first</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Every team that abandons mutation testing abandons it for the same two reasons: it took too long, and the survivor list was full of mutants nobody cared about. Both are solvable, and the solutions are measured rather than folklore.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mutation on the whole codebase gives a median of 820 mutants per changelist, while filtering to changed files with suppression gives a median of 7">
+        <style>
+          .q6cH { font: 800 13px Inter, sans-serif; }
+          .q6cB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q6cK { font: 800 20px Inter, sans-serif; }
+          .q6cN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="40" y="50" width="390" height="180" rx="12" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q6cH" x="58" y="82" fill="#3A1503">Whole codebase, nothing suppressed</text>
+        <text class="q6cK" x="58" y="120" fill="#C2410C">820 mutants</text>
+        <text class="q6cB" x="58" y="150">Median, in a single changelist.</text>
+        <text class="q6cB" x="58" y="174">Developers rated 85 percent of them</text>
+        <text class="q6cB" x="58" y="194">unproductive.</text>
+        <text class="q6cB" x="58" y="218" fill="#3A1503">Switched off inside a month.</text>
+        <rect x="450" y="50" width="390" height="180" rx="12" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6cH" x="468" y="82" fill="#14532D">Changed lines, heuristics on</text>
+        <text class="q6cK" x="468" y="120" fill="#15803D">7 mutants</text>
+        <text class="q6cB" x="468" y="150">Median, same changelist.</text>
+        <text class="q6cB" x="468" y="174">Productive ratio moved from 15 to</text>
+        <text class="q6cB" x="468" y="194">89 percent.</text>
+        <text class="q6cB" x="468" y="218" fill="#14532D">Small enough to read in review.</text>
+        <text class="q6cN" x="60" y="276">Google, on two billion lines. The technique did not change. The amount they showed a human did.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - unproductive mutants are a tuning problem, not a reason to quit</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Four moves that make the run fit inside a pull request<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>Changed files only.</strong> Mutate the lines in the diff. Nothing else. This is the difference between a run measured in hours and one measured in minutes, and it is the same choice Google made at two billion lines.</li>
+          <li><strong>Cache what did not change.</strong> Mutation results for untouched files are still valid. Keep them keyed on file hash and reuse them for the nightly summary.</li>
+          <li><strong>Set a wall-clock budget.</strong> Give the PR run a fixed ceiling. When it runs out, report what it got and pass with a note rather than blocking on a timeout, because a gate that flakes is a gate that gets removed.</li>
+          <li><strong>Suppress the unproductive operators.</strong> When a survivor is genuinely not worth killing, record why and stop generating it. Google moved the productive ratio from 15 percent to 89 percent doing exactly this. Unproductive mutants are feedback about your operator set, not evidence against the technique.</li>
+        </ul>
+        <p>Then split the work in two. The pull request job is a gate: small, fast, blocking, scoped to the diff. The nightly job is instrumentation: full suite, full mutation, coverage floors, flake counts. It never blocks, because nobody can act on a red build they woke up to. Put the flake list in the nightly output specifically, since Google's finding that flakiness scales with test size, 0.5 percent small, 1.6 percent medium, 14 percent large, means that is where you catch a suite drifting towards big slow tests before the gate starts failing for reasons nobody can reproduce.</p>
+        <div class="callout tip">
+          <p><strong>The trap to avoid.</strong> Do not answer a noisy survivor list by lowering the score threshold. That keeps the noise and removes the signal. Suppress the operator, keep the bar.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section class="section" id="part-4">
+    <div class="section-kicker">
+      <span class="klabel">Part 4 · covers the AI-specific gate</span>
+      <h2>Generated tests arrive in volume, which makes the gate matter more</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">Nobody hand-writes forty tests in an afternoon, so nobody ever needed an automatic answer to "is this test worth having". Generation removes that constraint, and the review capacity that used to be sufficient stops being sufficient. Meta already solved this, and published the shape of the answer.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Meta TestGen-LLM filter chain: 75 percent of generated tests built, 57 percent passed reliably, 25 percent increased coverage, and 73 percent of survivors were accepted by engineers">
+        <style>
+          .q6dS { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q6dV { font: 800 14px Inter, sans-serif; fill: #15803D; }
+          .q6dM { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q6dN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <line x1="90" y1="118" x2="790" y2="118" stroke="#C7D6CC" stroke-width="3"/>
+        <circle cx="90" cy="118" r="15" fill="#E1EBE4" stroke="#5F7268" stroke-width="2"/>
+        <circle cx="265" cy="118" r="15" fill="#BBF7D0" stroke="#15803D" stroke-width="2"/>
+        <circle cx="440" cy="118" r="15" fill="#BBF7D0" stroke="#15803D" stroke-width="2"/>
+        <circle cx="615" cy="118" r="15" fill="#22C55E" stroke="#14532D" stroke-width="2"/>
+        <circle cx="790" cy="118" r="15" fill="#15803D" stroke="#14532D" stroke-width="2"/>
+        <text class="q6dS" x="90" y="88" text-anchor="middle">Generated</text>
+        <text class="q6dS" x="265" y="88" text-anchor="middle">Builds</text>
+        <text class="q6dS" x="440" y="88" text-anchor="middle">Passes</text>
+        <text class="q6dS" x="615" y="88" text-anchor="middle">Improves suite</text>
+        <text class="q6dS" x="790" y="88" text-anchor="middle">Accepted</text>
+        <text class="q6dV" x="90" y="158" text-anchor="middle" fill="#5F7268">all</text>
+        <text class="q6dV" x="265" y="158" text-anchor="middle">75%</text>
+        <text class="q6dV" x="440" y="158" text-anchor="middle">57%</text>
+        <text class="q6dV" x="615" y="158" text-anchor="middle">25%</text>
+        <text class="q6dV" x="790" y="158" text-anchor="middle">73% of those</text>
+        <text class="q6dM" x="90" y="180" text-anchor="middle">raw output</text>
+        <text class="q6dM" x="265" y="180" text-anchor="middle">compiles</text>
+        <text class="q6dM" x="440" y="180" text-anchor="middle">reliably</text>
+        <text class="q6dM" x="615" y="180" text-anchor="middle">coverage up</text>
+        <text class="q6dM" x="790" y="180" text-anchor="middle">by engineers</text>
+        <text class="q6dN" x="60" y="228">Meta's TestGen-LLM. Every stage is automatic. The filter chain is the product, not the model.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a quarter of generated tests improved anything, and the chain found them</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The rule: never merge a generated test that does not demonstrably improve the suite<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Meta's system "verifies that its generated test classes successfully clear a set of filters that assure measurable improvement over the original test suite, thereby eliminating problems due to LLM hallucination". Read that twice. The defence against a hallucinated test is not a better prompt and not a human skimming a diff. It is a filter that runs and either passes or does not.</p>
+        <p>Their numbers are the reason the filter has to be automatic. 75 percent of generated test cases built at all. 57 percent passed reliably. <strong>25 percent increased coverage.</strong> Of the recommendations that survived all of it, 73 percent were accepted by engineers. A one-in-four hit rate is genuinely useful and completely unreviewable by hand at volume.</p>
+        <div class="callout win">
+          <p><strong>★ The gate rule for generated tests.</strong> A generated test merges only if it clears every filter automatically: it compiles, it passes on repeated runs, and it kills at least one mutant the existing suite did not already kill. Anything that fails a filter is discarded silently. Nobody negotiates with it.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Wiring the filter chain into your own pipeline<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>You do not need Meta's infrastructure to copy the shape. Four checks, in order, cheapest first.</p>
+        <div class="prompt-box good">
+          <span class="label">★ The filter chain, as a merge condition</span>
+1. Does it build?              discard if not
+2. Does it pass 3 runs of 3?   discard if not  (flake filter)
+3. Does it kill a mutant the
+   existing suite missed?      discard if not  (the real one)
+4. Does it assert on a value?  discard if not
+
+Survivors go to a human. Everything else is deleted, uncounted,
+and never appears in a pull request.
+        </div>
+        <p>Check three is the one that carries the weight, and it is the one people leave out because it costs a mutation run. It is also the only check in the list that can tell a useful test from a test that merely runs. The other three are hygiene.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>A generated test that passes, asserts, and kills nothing new is worse than no test. It adds runtime to every future CI run, it adds a file someone will have to maintain, and it makes the suite look larger and stronger than it is.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 5 ============ -->
+  <section class="section" id="part-5">
+    <div class="section-kicker">
+      <span class="klabel">Part 5 · covers what green is allowed to mean</span>
+      <h2>Green means the tests ran, and your gate decides the rest</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Back to where session 1 started, now that you can do something about it. The numbers have not changed. What has changed is that you no longer need the colour to carry weight it cannot carry.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A gauge showing that only 1.23 percent of Google test targets ever caught a real developer-introduced breakage">
+        <style>
+          .q6eB { font: 800 26px Inter, sans-serif; fill: #15803D; }
+          .q6eS { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q6eT { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q6eN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <path d="M 330 150 A 110 110 0 0 1 550 150" fill="none" stroke="#E1EBE4" stroke-width="22"/>
+        <path d="M 330 150 A 110 110 0 0 1 550 150" fill="none" stroke="#15803D" stroke-width="22" stroke-dasharray="4.3 400"/>
+        <line x1="440" y1="150" x2="335" y2="147" stroke="#14201A" stroke-width="3"/>
+        <circle cx="440" cy="150" r="5" fill="#14201A"/>
+        <text class="q6eB" x="440" y="124" text-anchor="middle">1.23%</text>
+        <text class="q6eS" x="440" y="142" text-anchor="middle">of test targets</text>
+        <text class="q6eT" x="322" y="172" text-anchor="middle">0</text>
+        <text class="q6eT" x="558" y="172" text-anchor="middle">100</text>
+        <text class="q6eN" x="60" y="200">Ever caught a real break. 91.3 percent never failed once. 84 percent of pass-to-fail is flaky.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the needle has not moved since session 1, and it does not need to</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What green is now allowed to mean<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Green means the tests ran and none of them complained. That is the whole claim, and it was always the whole claim. Of 5,562,881 Google test targets, 91.3 percent never failed once, and only 1.23 percent ever caught a developer-introduced breakage. Red is not much stronger, since about 84 percent of pass-to-fail transitions involve a flaky test.</p>
+        <p>Your gate is what makes green mean more. Green plus a mutation score on the diff means a change was made and something would have noticed if it were wrong. Green plus an assertion check means nothing entered the suite that only executes code. That is a claim worth defending in a release meeting, and the colour on its own never was.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The same lesson arrives from the other side in the sibling course, <a href="https://phoebefu6.github.io/learn-ai-coding-with-phoebe/">learn-ai-coding-with-phoebe ↗</a>. Its playground scores five out of five green while every single implementation underneath is wrong. Here you learned that a green suite can be checking nothing. There you watch green code that does not work. Same gap, opposite ends.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ BUILD-ALONG ============ -->
+  <section class="section" id="demo-6">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Write the gate for the repository you actually work in</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">Open the CI config for the module you have carried through six sessions. You are writing four things: what runs on a pull request, what runs nightly, what blocks a merge, and what happens when it blocks the wrong thing. Twenty-two minutes is enough because the decisions are already made.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Decision tree for the gate: pull requests run diff mutation and assertion checks and can block a merge, while the nightly full run reports only and never blocks">
+        <style>
+          .q6fT { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q6fW { font: 800 12px Inter, sans-serif; fill: #fff; }
+          .q6fR { font: 700 12px Inter, sans-serif; fill: #991B1B; }
+          .q6fN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="340" y="24" width="200" height="42" rx="10" fill="#15803D"/>
+        <text class="q6fW" x="440" y="50" text-anchor="middle">Pull request opened</text>
+        <line x1="440" y1="66" x2="440" y2="86" stroke="#5F7268" stroke-width="2"/>
+        <line x1="160" y1="86" x2="720" y2="86" stroke="#5F7268" stroke-width="2"/>
+        <line x1="160" y1="86" x2="160" y2="104" stroke="#5F7268" stroke-width="2"/>
+        <line x1="440" y1="86" x2="440" y2="104" stroke="#5F7268" stroke-width="2"/>
+        <line x1="720" y1="86" x2="720" y2="104" stroke="#5F7268" stroke-width="2"/>
+        <rect x="40" y="104" width="240" height="50" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6fT" x="160" y="126" text-anchor="middle">Every PR</text>
+        <text class="q6fT" x="160" y="144" text-anchor="middle">Mutation on changed files</text>
+        <rect x="320" y="104" width="240" height="50" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6fT" x="440" y="126" text-anchor="middle">Every PR</text>
+        <text class="q6fT" x="440" y="144" text-anchor="middle">Assertion check on tests</text>
+        <rect x="600" y="104" width="240" height="50" rx="10" fill="#E1EBE4" stroke="#5F7268" stroke-width="1.5"/>
+        <text class="q6fT" x="720" y="126" text-anchor="middle">Nightly</text>
+        <text class="q6fT" x="720" y="144" text-anchor="middle">Full suite, full mutation</text>
+        <line x1="160" y1="154" x2="160" y2="176" stroke="#5F7268" stroke-width="2"/>
+        <line x1="440" y1="154" x2="440" y2="176" stroke="#5F7268" stroke-width="2"/>
+        <line x1="720" y1="154" x2="720" y2="176" stroke="#5F7268" stroke-width="2"/>
+        <rect x="40" y="176" width="240" height="50" rx="10" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <text class="q6fR" x="160" y="198" text-anchor="middle">Score under 60 percent</text>
+        <text class="q6fR" x="160" y="216" text-anchor="middle">Merge is blocked</text>
+        <rect x="320" y="176" width="240" height="50" rx="10" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <text class="q6fR" x="440" y="198" text-anchor="middle">New test, no assertion</text>
+        <text class="q6fR" x="440" y="216" text-anchor="middle">Merge is blocked</text>
+        <rect x="600" y="176" width="240" height="50" rx="10" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q6fT" x="720" y="198" text-anchor="middle" fill="#3A1503">Trends and flake list</text>
+        <text class="q6fT" x="720" y="216" text-anchor="middle" fill="#3A1503">Never blocks a merge</text>
+        <line x1="160" y1="226" x2="160" y2="248" stroke="#C7D6CC" stroke-width="2"/>
+        <line x1="440" y1="226" x2="440" y2="248" stroke="#C7D6CC" stroke-width="2"/>
+        <rect x="40" y="248" width="800" height="44" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q6fT" x="440" y="275" text-anchor="middle">Every block needs a named override, used out loud in the pull request, never quietly</text>
+        <text class="q6fN" x="60" y="318">Two blocking checks, one reporting job. A gate with no escape hatch gets deleted, not respected.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - what blocks, what reports, and what happens when it is wrong</figcaption>
+    </figure>
+
+    <div class="tick" data-stages="Push|Diff scan|Mutate|Judge|Merge" data-title="The gate, one pull request at a time">
+      <p class="tick-note" data-stage="0"><b>Push.</b> The diff is the unit of work. Nothing outside the changed files is in scope for this run.</p>
+      <p class="tick-note" data-stage="1"><b>Diff scan.</b> Assertion check first, because it costs milliseconds. Any new test with no assertion on a value fails here.</p>
+      <p class="tick-note" data-stage="2"><b>Mutate.</b> Mutation operators on the changed lines only, with a wall-clock budget and the cache warm.</p>
+      <p class="tick-note" data-stage="3"><b>Judge.</b> Score against the threshold. The survivor list goes in the pull request comment, and it is short enough to read.</p>
+      <p class="tick-note" data-stage="4"><b>Merge.</b> Pass, or block with a named override. No third option, because a soft gate teaches people to ignore it.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Write down the three thresholds first.</strong> Mutation score on the diff, assertion rule, flakiness budget. Put them in a file in the repository, not in a CI dashboard, so changing them shows up in a diff and someone has to agree.</p></div>
+      <div class="step"><p><strong>Split the jobs.</strong> One pull request job scoped to changed files with a hard time budget. One nightly job that runs everything and blocks nothing. If you only have time for one tonight, build the pull request job.</p></div>
+      <div class="step"><p><strong>Run it against last week's merged pull requests.</strong> This is the step people skip and it is the one that saves the project. If your new gate would have blocked six of the last ten merges, the threshold is wrong, not the team.</p></div>
+      <div class="step"><p><strong>Write the override, then the generated-test filter.</strong> The override is a label, a comment or a second approval, as long as it is visible and leaves a record. The filter is four checks: builds, passes on repeat runs, kills a new mutant, asserts on a value. Anything failing one never reaches a human.</p></div>
+      <div class="step"><p><strong>Say what the gate does not do.</strong> Write one line in the README. It does not prove correctness, it does not replace review, and roughly 27 percent of real faults are coupled to no mutant at all. A gate that overclaims loses trust the first time something ships broken.</p></div>
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ The whole gate, small enough to paste into a repository</span>
+gate:
+  on_pull_request:
+    mutation:
+      scope: changed-files
+      min_score: 60          # starting point, review monthly
+      time_budget: 8m        # over budget reports, does not block
+    assertions:
+      new_tests_must_assert: true
+    blocks_merge: true
+    override: label "gate-override" + a comment saying why
+
+  nightly:
+    mutation: full
+    coverage: report only, alert if a module drops below 60
+    flakiness: list every test that passed and failed on the same commit
+    blocks_merge: false
+    </div>
+
+    <div class="stakes" data-base="0" data-unit="points of gate strength" data-title="What your gate is actually worth" data-foot="Tick only what is already true, or true by the end of tonight. This is the honest version of a CI badge.">
+      <label><input type="checkbox" data-delta="4"> Mutation runs on the diff of every pull request, automatically</label>
+      <label><input type="checkbox" data-delta="3"> A new test with no assertion cannot be merged</label>
+      <label><input type="checkbox" data-delta="2"> The thresholds live in the repository, so changing them needs agreement</label>
+      <label><input type="checkbox" data-delta="2"> Generated tests must kill a new mutant before a human sees them</label>
+      <label><input type="checkbox" data-delta="-4" data-trap="1"> A coverage percentage is still a merge condition alongside all of it</label>
+    </div>
+
+    <div class="scorecard" data-title="Final gate: ship this suite, or do not" data-foot="Strict on purpose. This is not the halfway check from session 3, it is the question of whether the suite can be defended.">
+      <div class="sc-row"><div class="sc-q">The gate runs without anyone remembering to run it
+        <em>Automatic on every pull request, or it is not a gate.</em></div></div>
+      <div class="sc-row"><div class="sc-q">A survivor on changed code has actually blocked a merge at least once
+        <em>An untriggered gate is a decoration. It has to have said no.</em></div></div>
+      <div class="sc-row"><div class="sc-q">Nothing entered the suite this month without an assertion on a value
+        <em>Count them. Not "we usually do" - count them.</em></div></div>
+      <div class="sc-row"><div class="sc-q">You can state your flakiness rate as a number, and it is inside your budget
+        <em>If you cannot name the number, the budget is not real.</em></div></div>
+      <div class="sc-row"><div class="sc-q">Every generated test that merged was measured against the suite it joined
+        <em>Measured by a filter that runs, not by a person skimming the diff.</em></div></div>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>The last one: run it for a month, then tune it</h2>
+      <span class="tag exercise">30 min now, then a month of watching</span>
+    </div>
+    <ol>
+      <li><strong>Turn the gate on in reporting mode for two weeks.</strong> It comments, it never blocks. You are collecting evidence about your thresholds, not enforcing them yet.</li>
+      <li><strong>Count two things every week.</strong> How many pull requests the gate would have blocked, and how many of those blocks you agree with. When the second number is most of the first, switch blocking on.</li>
+      <li><strong>Tune one threshold, once.</strong> Resist the urge to move all three. Move the mutation score by 5 points, or suppress one noisy operator, and see what a month does. Thresholds that move weekly are thresholds nobody plans around.</li>
+      <li><strong>Re-run session 1's playground with a full passport.</strong> Open <a href="01-the-green-suite-lie.html">the green suite lie</a> again and run the weak suite. You will read the survivor list completely differently now, and that difference is the whole course.</li>
+      <li><strong>Write the paragraph.</strong> One paragraph for your team explaining what your gate checks and what it does not claim. If you can write it without mentioning a coverage percentage, you have finished the course.</li>
+    </ol>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and the final stamp goes in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Why gate on mutation score of the diff rather than the whole codebase?</p>
+      <button class="qopt" type="button">A · Mutants on unchanged code are invalid and always survive</button>
+      <button class="qopt" type="button">B · Mutation testing is only accurate on recently written code</button>
+      <button class="qopt" type="button">C · A whole-codebase run is too slow and too noisy to act on. Google's filtering took a changelist from a median of 820 mutants to 7</button>
+      <p class="qwhy">The technique was never the problem. The volume shown to a human was. Suppression heuristics moved the productive ratio from 15 percent to 89 percent, and 7 survivors is a list a reviewer will actually read.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Meta's TestGen-LLM generated tests at industrial scale. What did the value actually come from?</p>
+      <button class="qopt" type="button">A · The filter chain, which only kept tests that measurably improved the existing suite</button>
+      <button class="qopt" type="button">B · A larger model than anyone else had access to at the time</button>
+      <button class="qopt" type="button">C · Generating enough tests that a good one appears by chance</button>
+      <p class="qwhy">Their words: the system "verifies that its generated test classes successfully clear a set of filters that assure measurable improvement over the original test suite, thereby eliminating problems due to LLM hallucination". Only 25 percent increased coverage, and the chain is what found them.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · If coverage is not the gate, why keep measuring it at all?</p>
+      <button class="qopt" type="button">A · Because a high percentage proves the suite is thorough</button>
+      <button class="qopt" type="button">B · Because a low number does guarantee that large areas are going completely untested</button>
+      <button class="qopt" type="button">C · Because 100 percent is the only defensible target to publish</button>
+      <p class="qwhy">The asymmetry is the whole reason to keep it. Google: high coverage "does not guarantee high quality in the test coverage", but low coverage does guarantee untested areas. Floor detector, not target.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google, mutation testing at scale</span><span class="note">The median of 820 mutants per changelist down to 7, the 85 percent unproductive rating, and the productive ratio moving from 15 to 89 percent. Taught as the whole argument for gating on the diff</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google, code coverage best practices</span><span class="note">The 60 / 75 / 90 bands, the high-versus-low asymmetry and the logarithmic-gains warning, used to demote coverage to a floor detector rather than delete it</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Meta, TestGen-LLM, FSE 2024</span><span class="note">75 / 57 / 25 percent and 73 percent acceptance, plus the filter-chain sentence. Taught as the model to copy for any generated test</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Fowler on test coverage</span><span class="note">The 100 percent smell and the Marick line about expecting versus requiring coverage, used as the closing argument</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Memon et al. and Google on flakiness</span><span class="note">91.3 / 1.23 percent, the 84 percent of pass-to-fail transitions, the 1.5 percent continual flake rate and the small / medium / large split behind the budget</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Inozemtseva and Holmes, Zhang and Mesbah</span><span class="note">Carried forward from sessions 1 and 2 as the justification for the four signals rather than re-taught in full here</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 6 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The four signals</b><span>Mutation score on the diff, every test asserts, no new assertion-free tests, flakiness inside budget. Three block, one is watched.</span></div>
+      <div class="cheat-item"><b>Starting numbers, not laws</b><span>60 percent on the diff, zero assertion-free additions, 1.5 percent flake budget. Run a month, then tune one of them.</span></div>
+      <div class="cheat-item"><b>Gate on the diff</b><span>Google went from a median of 820 mutants per changelist to 7. Same technique, survivable volume.</span></div>
+      <div class="cheat-item"><b>Coverage, demoted</b><span>Report it, alert below 60, never gate on it. Low coverage is real information. High coverage is none.</span></div>
+      <div class="cheat-item"><b>The generated-test rule</b><span>It merges only if it kills a mutant the suite already missed. Meta: 25 percent of generated tests improved anything.</span></div>
+      <div class="cheat-item"><b>What green means</b><span>The tests ran. Nothing more. Your gate is the part that makes it worth saying out loud.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">What you own now</span>
+    <p>Six sessions, one suite, and no cliffhanger this time. You own a test suite you can defend line by line, a metric that actually distinguishes a good suite from one that merely runs, a gate your team can turn on this week, and the evidence to explain calmly why coverage is not it. That last one will come up more than you expect. When it does, you have the papers, the numbers and a suite that proves it. Go back to <a href="../index.html">all six sessions</a> any time, browse the rest at <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a>, and if you want the same lesson from the other side, <a href="https://phoebefu6.github.io/learn-ai-coding-with-phoebe/">learn-ai-coding-with-phoebe ↗</a> is where green code turns out to be wrong. Thank you for building the thing rather than reading about it.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 6 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="01-the-green-suite-lie.html">Start again and re-run the playground →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

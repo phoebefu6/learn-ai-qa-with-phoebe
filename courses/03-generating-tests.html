@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 3 of 6. Generation is genuinely useful and the order you do it in decides whether it helps or hurts. Tests written after the code find 14 percent of faults. Written independently, 25 percent.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Generating tests - learn ai qa with phoebe">
+<meta property="og:description" content="Session 3 of 6. Generate from the spec, not the implementation. Two independent studies, one ordering rule, and Meta's filter chain.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/03-generating-tests.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Generating tests - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 3 of 6. 14 percent versus 25 percent, decided entirely by what the test was written from.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 3 · Generating tests - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 3 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 3 of 6</div>
+    <h1>Generating <span class="accent">tests</span></h1>
+    <p class="sub">This is not the session where somebody tells you generated tests are bad. They are genuinely useful, at real industrial scale, with published numbers. It is the session where you learn that the <strong>order</strong> you do it in decides whether they help or hurt, and that the gap between the two orders is roughly double. Tonight you generate tests for your own module twice, once from the code and once from the specification you wrote for homework, and compare what each one catches.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Medium</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Bring your module and the spec you wrote</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Recap</span>
+      <span class="a2" style="flex:4">3-18 · The tooling, the ordering, the scale</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: generate it twice</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ RECAP ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Recap</span>
+      <h2>Why the specification homework mattered</h2>
+    </div>
+    <p class="lede">Session 2 asked you to write down what your module promises: inputs, outputs, thresholds, error cases, half a page. That document is the input to tonight's most important experiment, and without it half of this session is a spectator sport.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> Two generated test sets for the same module, produced in two different orders, and a measured difference between them. Plus one rule that costs nothing to adopt and is backed by two independent studies.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The whole session in one sentence<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Generate the test from the specification, not from the implementation.</strong> That is the rule. Everything else tonight is either the evidence for it or the machinery around it.</p>
+        <p>The reason it works is uncomfortable once you see it. When a model reads your finished code and writes tests for it, it is not checking your code against anything. It is describing your code back to you in the shape of assertions. If the code is right, you get a fine test. If the code is wrong, you get a test that carefully encodes the bug as the expected behaviour, goes green, and now defends the bug against anyone who tries to fix it.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>This is why a generated suite can go from zero to high coverage in an afternoon and catch nothing the following week. It was never given anything to compare the code against. Session 1 showed you a suite like that with a mutation score of 25.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the tooling as it actually is</span>
+      <h2>What the tools really do, in their vendors' own words</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Before the research, the honest inventory. The first-party AI surface in unit testing is smaller than the marketing suggests, and the one genuinely engineered system is for browser end-to-end work rather than units.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Playwright Test Agents stack up as planner, generator and healer, with the documented catch that the healer can skip a test if it decides the underlying functionality is broken">
+        <style>
+          .q3aT { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q3aW { font: 700 12px Inter, sans-serif; fill: #fff; }
+          .q3aK { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q3aN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q3aK" x="60" y="30">Playwright Test Agents, introduced in v1.56</text>
+        <rect x="60" y="44" width="280" height="44" rx="8" fill="#BBF7D0"/>
+        <text class="q3aT" x="74" y="72">Planner writes a Markdown plan</text>
+        <rect x="60" y="96" width="460" height="44" rx="8" fill="#22C55E"/>
+        <text class="q3aT" x="74" y="124">Generator writes real test files</text>
+        <rect x="60" y="148" width="620" height="44" rx="8" fill="#15803D"/>
+        <text class="q3aW" x="74" y="176">Healer repairs the failures it can</text>
+        <rect x="60" y="200" width="700" height="44" rx="8" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <text class="q3aT" x="74" y="228">Healer can skip a test if it decides the feature is broken</text>
+        <text class="q3aN" x="60" y="276">The fourth row is the one that matters. A skipped test is a green suite testing nothing.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three agents that add, and one behaviour that quietly removes</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The four tools, and the catch each vendor documents<span class="mini">6 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>Copilot's <span class="mono">/tests</span> command.</strong> "Generate unit tests for the selected code", available in VS Code, Visual Studio, JetBrains and Xcode. GitHub's own caveats, and they are unusually direct: the tests "may not cover all scenarios", complex scenarios "require more detailed prompts", and "You should always review the generated code." Note what the command takes as input. The selected code. That is the ordering problem, shipped as a keyboard shortcut.</p>
+        <p><strong>Playwright Test Agents.</strong> Three agents. The planner writes a Markdown test plan. The generator turns that plan into real test files, verifying selectors live rather than guessing them. The healer repairs failures. This is the most seriously engineered AI testing system in the landscape, and it comes with three documented catches: agent definitions are static files that go stale on every Playwright upgrade, generated tests "may require subsequent repairs", and the healer "can skip tests if it determines underlying functionality is broken".</p>
+        <div class="callout tip">
+          <p><strong>That third catch deserves a policy, not a note.</strong> A skipped test does not fail the build. It leaves you a green suite that is testing nothing in exactly the area where something was actually broken. If you run the healer, make skipped-test counts a visible number that a human signs off on, the same way you would a deleted test.</p>
+        </div>
+        <p><strong>Vitest.</strong> The only unit framework of the three with first-party AI guidance, and it is guidance rather than a tool. It is worth reading precisely because it documents the real failure modes: models trained on Jest emit <span class="mono">jest.fn()</span> and fail, mocks leak between tests unless you set <span class="mono">restoreMocks: true</span>, AI "defaults to excessive test doubles", and agents hang forever unless they use <span class="mono">vitest run</span> rather than watch mode.</p>
+        <p><strong>Jest and pytest.</strong> No first-party AI features documented. Say it that way, not as "none exist" - the accurate claim is about what the official docs carry, and both are large ecosystems with plenty of third-party tooling around them.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The excessive-mocks trap, and why it makes session 2 worse<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Vitest's line that AI "defaults to excessive test doubles" is not a style complaint. Follow it through to what it does to your suite and it lands directly on last session's material.</p>
+        <p>A test full of doubles asserts on the interactions between the parts rather than on the behaviour of the whole. Which helper was called, with what, how many times. That is the definition of a change detector: it is testing the current implementation rather than the specification, so it goes red on a harmless refactor and it goes green while the actual output is wrong.</p>
+        <ul>
+          <li><strong>The tell is the same one you learned last week.</strong> Refactor without changing behaviour. If the generated tests go red, the generator gave you change detectors.</li>
+          <li><strong>The fix is upstream, in the prompt.</strong> Ask for tests that assert on returned values and observable effects, and say explicitly that doubles are only for genuine boundaries such as the network, the clock and the filesystem.</li>
+          <li><strong>Set <span class="mono">restoreMocks: true</span> before you generate anything.</strong> Otherwise leaked mocks make the failures order-dependent, and you will spend the evening debugging the harness instead of reading the tests.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the ordering problem</span>
+      <h2>The order decides the result, and the gap is roughly double</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">This is the most important part of the session and possibly of the course, because it is a free improvement. Same model, same module, same amount of work. The only thing you change is what the test was written from.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tests generated after faulty code detect 14 percent of faults against 25 percent for tests generated independently, and prompting with correct code improves accuracy by 57 percent, coverage by 12 percent and bug detection by 24 percent, with adding a description of intent recovering 34 percent">
+        <style>
+          .q3bL { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q3bV { font: 800 12px Inter, sans-serif; fill: #14201A; }
+          .q3bK { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q3bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q3bK" x="60" y="34">Share of faults detected, Konstantinou and colleagues 2026</text>
+        <text class="q3bL" x="300" y="68" text-anchor="end">Tests written after the code</text>
+        <rect x="320" y="48" width="118" height="30" rx="6" fill="#FCA5A5"/>
+        <text class="q3bV" x="448" y="68">14%</text>
+        <text class="q3bL" x="300" y="120" text-anchor="end">Tests written independently</text>
+        <rect x="320" y="100" width="210" height="30" rx="6" fill="#15803D"/>
+        <text class="q3bV" x="540" y="120">25%</text>
+        <line x1="60" y1="148" x2="820" y2="148" stroke="#E1EBE4" stroke-width="1.5"/>
+        <text class="q3bK" x="60" y="176">Improvement from prompting with correct code, Huang and colleagues, 11 models</text>
+        <text class="q3bL" x="300" y="210" text-anchor="end">Test accuracy</text>
+        <rect x="320" y="190" width="480" height="30" rx="6" fill="#22C55E"/>
+        <text class="q3bV" x="810" y="210">+57%</text>
+        <text class="q3bL" x="300" y="258" text-anchor="end">Coverage</text>
+        <rect x="320" y="238" width="101" height="30" rx="6" fill="#22C55E"/>
+        <text class="q3bV" x="431" y="258">+12%</text>
+        <text class="q3bL" x="300" y="306" text-anchor="end">Bug detection</text>
+        <rect x="320" y="286" width="202" height="30" rx="6" fill="#22C55E"/>
+        <text class="q3bV" x="532" y="306">+24%</text>
+        <text class="q3bL" x="300" y="354" text-anchor="end">Bug detection, intent added back</text>
+        <rect x="320" y="334" width="286" height="30" rx="6" fill="#15803D"/>
+        <text class="q3bV" x="616" y="354">+34%</text>
+        <text class="q3bN" x="60" y="386">The only variable is what the model was given to write the test from.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two independent studies, one finding, and it is free to act on</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Study one: tests written after faulty code inherit the fault<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <div class="prompt-box bad">
+          <span class="label">✗ The finding you cannot unsee</span>
+Konstantinou, Tambon and Papadakis, 2026.
+
+Tests generated AFTER faulty code detect        14% of faults.
+Tests generated INDEPENDENTLY detect            25% of faults.
+
+Their sentence: "incorrect implementations and tests are mutually
+consistent, masking defects rather than revealing them."
+
+And the part that closes off the easy escape: the effect "persists
+across different prompting strategies and multi-step workflows."
+        </div>
+        <p>Sit with "mutually consistent" for a second. The test and the code are not in disagreement, which is precisely the problem. A test is only useful because it is an independent statement of what should happen, checked against a separate statement of what does happen. When both statements come from the same source, the check is circular and the green is meaningless.</p>
+        <p>The second half is the important half for anyone planning to prompt their way out. Better prompts did not fix it. Multi-step agent workflows did not fix it. The ordering is upstream of prompt craft, which is unusual and worth saying out loud: this is not a skill issue, it is a sequence issue.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Study two: eleven models, and the mitigation with evidence<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Huang and colleagues ran the same question across eleven models, which matters because it rules out "that is just one model being bad."</p>
+        <ul>
+          <li><strong>Prompting with correct rather than incorrect code improved test accuracy by 57 percent, coverage by 12 percent, and bug detection by 24 percent.</strong> The quality of what you feed in propagates straight through to the quality of what you get out, and it propagates hardest into the thing you care most about.</li>
+          <li><strong>On real-world examples, tests generated for incorrect code had a 47 percent worse bug detection rate.</strong> The effect is not confined to tidy benchmark problems.</li>
+          <li><strong>The mitigation, and this is the practical one: supplying a natural-language description of intent recovered 34 percent bug detection.</strong> Not a new model. Not a longer prompt. A written statement of what the code is supposed to do.</li>
+        </ul>
+        <div class="callout win">
+          <p><strong>★ That last bullet is your homework paying off.</strong> The half page you wrote in session 2 is the natural-language description of intent. You already have it. The rule is simply: hand the generator that, and do not hand it the implementation until the tests exist.</p>
+        </div>
+      </div>
+    </details>
+
+    <div class="hotspot" data-title="Where the spec, the code and the tests sit in the two orderings"
+         data-foot="Click each pin. The only structural difference is which box the arrow starts from.">
+      <div class="hs-mock">
+        <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two orderings side by side: in ordering A the generated tests come from the implementation while the spec is never read, and in ordering B they come from the spec with the code withheld until afterwards">
+          <style>
+            .q3hH { font: 800 13px Inter, sans-serif; fill: #14532D; }
+            .q3hT { font: 700 12px Inter, sans-serif; fill: #14201A; }
+            .q3hW { font: 700 12px Inter, sans-serif; fill: #fff; }
+            .q3hS { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+            .q3hP { font: 400 11px Inter, sans-serif; fill: #BBF7D0; }
+            .q3hR { font: 800 12px Inter, sans-serif; fill: #14201A; }
+          </style>
+          <rect x="30" y="44" width="400" height="300" rx="12" fill="#F0FDF4" stroke="#E1EBE4" stroke-width="1.5"/>
+          <text class="q3hH" x="48" y="72">Ordering A: code first</text>
+          <rect x="60" y="100" width="160" height="54" rx="8" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+          <text class="q3hT" x="76" y="124">Implementation</text>
+          <text class="q3hS" x="76" y="142">with a bug in it</text>
+          <line x1="140" y1="154" x2="140" y2="192" stroke="#C2410C" stroke-width="2"/>
+          <polygon points="134,192 146,192 140,200" fill="#C2410C"/>
+          <rect x="60" y="200" width="160" height="54" rx="8" fill="#BBF7D0" stroke="#15803D" stroke-width="1.5"/>
+          <text class="q3hT" x="76" y="224">Generated tests</text>
+          <text class="q3hS" x="76" y="242">agree with the bug</text>
+          <rect x="250" y="100" width="150" height="54" rx="8" fill="#fff" stroke="#C7D6CC" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text class="q3hS" x="266" y="124">Spec</text>
+          <text class="q3hS" x="266" y="142">never read</text>
+          <text class="q3hR" x="60" y="292">14% of faults found</text>
+          <text class="q3hS" x="60" y="314">Test and code are mutually consistent.</text>
+          <rect x="450" y="44" width="400" height="300" rx="12" fill="#F0FDF4" stroke="#E1EBE4" stroke-width="1.5"/>
+          <text class="q3hH" x="468" y="72">Ordering B: spec first</text>
+          <rect x="480" y="100" width="160" height="54" rx="8" fill="#BBF7D0" stroke="#15803D" stroke-width="1.5"/>
+          <text class="q3hT" x="496" y="124">Spec and criteria</text>
+          <text class="q3hS" x="496" y="142">written by you</text>
+          <line x1="560" y1="154" x2="560" y2="192" stroke="#15803D" stroke-width="2"/>
+          <polygon points="554,192 566,192 560,200" fill="#15803D"/>
+          <rect x="480" y="200" width="160" height="54" rx="8" fill="#15803D"/>
+          <text class="q3hW" x="496" y="224">Generated tests</text>
+          <text class="q3hP" x="496" y="242">written from intent</text>
+          <rect x="670" y="100" width="150" height="54" rx="8" fill="#fff" stroke="#C7D6CC" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text class="q3hS" x="686" y="124">Code</text>
+          <text class="q3hS" x="686" y="142">withheld</text>
+          <line x1="745" y1="154" x2="745" y2="216" stroke="#C7D6CC" stroke-width="2" stroke-dasharray="5 4"/>
+          <line x1="745" y1="216" x2="652" y2="216" stroke="#C7D6CC" stroke-width="2" stroke-dasharray="5 4"/>
+          <polygon points="652,210 652,222 644,216" fill="#C7D6CC"/>
+          <text class="q3hS" x="670" y="242">run against it after</text>
+          <text class="q3hR" x="480" y="292">25% of faults found</text>
+          <text class="q3hS" x="480" y="314">A disagreement is now a finding.</text>
+        </svg>
+      </div>
+      <button class="hs-pin" style="--x:16%;--y:33%" data-title="The implementation"
+              data-cap="In ordering A this is the only thing the model sees. Every mistake in it becomes an expected value in the tests."></button>
+      <button class="hs-pin" style="--x:16%;--y:60%" data-title="Tests that agree with the code"
+              data-cap="They pass immediately, which feels like success. Konstantinou and colleagues measured 14 percent of faults detected."></button>
+      <button class="hs-pin" style="--x:64%;--y:33%" data-title="The spec as the input"
+              data-cap="Your half page from session 2. Huang and colleagues measured a 34 percent recovery in bug detection from supplying intent."></button>
+      <button class="hs-pin" style="--x:85%;--y:33%" data-title="The code, withheld"
+              data-cap="You still run the tests against it, just afterwards. Now a failure means the two statements disagree, which is the whole point."></button>
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers what raw generation yields at scale</span>
+      <h2>Meta ran this for real, and the value was in the filter</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Nothing above says do not generate. Here is the largest published deployment, with numbers that are both genuinely good and considerably less than the headline suggests.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Meta's TestGen-LLM results: 75 percent of generated test cases built, 57 percent passed reliably, 25 percent increased coverage, and 73 percent of surviving recommendations were accepted by engineers">
+        <style>
+          .q3cL { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q3cV { font: 800 12px Inter, sans-serif; fill: #14201A; }
+          .q3cK { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q3cN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q3cK" x="60" y="32">Meta's TestGen-LLM, FSE 2024</text>
+        <text class="q3cL" x="300" y="68" text-anchor="end">Generated tests that built</text>
+        <rect x="320" y="48" width="480" height="30" rx="6" fill="#22C55E"/>
+        <text class="q3cV" x="810" y="68">75%</text>
+        <text class="q3cL" x="300" y="120" text-anchor="end">Passed reliably</text>
+        <rect x="320" y="100" width="365" height="30" rx="6" fill="#22C55E"/>
+        <text class="q3cV" x="695" y="120">57%</text>
+        <text class="q3cL" x="300" y="172" text-anchor="end">Increased coverage</text>
+        <rect x="320" y="152" width="160" height="30" rx="6" fill="#C2410C"/>
+        <text class="q3cV" x="490" y="172">25%</text>
+        <text class="q3cL" x="300" y="224" text-anchor="end">Accepted by engineers</text>
+        <rect x="320" y="204" width="467" height="30" rx="6" fill="#15803D"/>
+        <text class="q3cV" x="797" y="224">73%</text>
+        <text class="q3cN" x="60" y="272">Three quarters build. One quarter adds coverage. The filter chain decides which.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the acceptance rate is high because the filter ran first</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The architectural lesson, which is the transferable part<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Read the funnel honestly. Three quarters of generated test cases built at all. Just over half passed reliably. Only a quarter increased coverage. And yet 73 percent of the recommendations that survived were accepted by engineers, which is an extraordinary acceptance rate for machine-written code.</p>
+        <p>Both halves of that are true at once, and the bridge between them is the filter. Meta's own framing: the system "verifies that its generated test classes successfully clear a set of filters that assure measurable improvement over the original test suite, thereby eliminating problems due to LLM hallucination."</p>
+        <div class="callout tip">
+          <p><strong>The transferable design, and you can build a small version this week.</strong> Do not treat generated tests as output. Treat them as candidates, and put a gate between the generator and your suite. A candidate enters only if it builds, passes reliably on repeated runs, and demonstrably improves the suite on a measure you have chosen in advance. Everything else is discarded without discussion. Meta's number for that improvement measure was coverage. Session 4 gives you a better one.</p>
+        </div>
+        <p><strong>The academic benchmark, for calibration.</strong> TestPilot, evaluated on 25 npm packages and 1,684 API functions, reached a median of 70.2 percent statement coverage and 52.8 percent branch coverage. Solid numbers, and worth holding next to session 1: coverage is what these systems are usually optimised for, and coverage is the metric the research says does not measure suite quality.</p>
+      </div>
+    </details>
+
+    <div class="stakes" data-base="25" data-unit="percent of faults found"
+         data-title="What the ordering is worth on your module"
+         data-foot="The 25 and the 14 are measured figures from the 2026 study. The smaller moves are directional, not measured.">
+      <label><input type="checkbox" data-delta="-11" data-trap="1"> You paste the finished implementation in and ask for tests from it</label>
+      <label><input type="checkbox" data-delta="4"> You hand it a written description of intent before it sees any code</label>
+      <label><input type="checkbox" data-delta="3"> You write down the thresholds and error cases the spec names</label>
+      <label><input type="checkbox" data-delta="3"> Every candidate must clear a filter before it enters the suite</label>
+      <label><input type="checkbox" data-delta="-3" data-trap="1"> You accept the first batch without running it against a known bug</label>
+    </div>
+  </section>
+
+  <!-- ============ BUILD-ALONG ============ -->
+  <section class="section" id="demo-3">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Generate it twice and compare what each set catches</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">Your module, two orderings, one comparison. Use whatever generator you already have. The finding is about the sequence, not about the tool, so Copilot, an agent, or a chat window all work.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Plant a bug first, and write it down.</strong> Make one small deliberate mistake in the module. Move a threshold by one, flip a comparison, drop an edge case. Note exactly what you did on paper, then close the file. This is your known fault, and without it you have no way to grade either test set.</p></div>
+      <div class="step"><p><strong>Ordering A: generate from the code.</strong> Give the generator the module as it now is, bug included, and ask for unit tests. Do not mention the specification, do not describe intent. This is the default workflow and it is what <span class="mono">/tests</span> on a selection does.</p></div>
+      <div class="step"><p><strong>Run set A and look at the colour.</strong> Green, most likely. Read the assertions around your planted bug. In a good number of cases you will find the bug written down as the expected value, which is "mutually consistent" in the flesh.</p></div>
+      <div class="step"><p><strong>Ordering B: generate from the spec.</strong> New session, no history. Give it only your half page from session 2: inputs, outputs, thresholds, error cases. Ask for tests against that description. Withhold the implementation entirely.</p></div>
+      <div class="step"><p><strong>Now run set B against the buggy code.</strong> This is the moment worth staying quiet for. If the spec named the threshold you moved, something in set B should be red, and the failure message should point straight at your planted fault.</p></div>
+      <div class="step"><p><strong>Fix the bug and re-run both.</strong> Set B should go green. Set A was already green and stayed green, which is the entire lesson in two runs.</p></div>
+      <div class="step"><p><strong>Apply the filter to both sets.</strong> Keep a candidate only if it builds, passes reliably twice in a row, and adds something the suite did not already check. Delete the rest without negotiating with yourself. This is your small TestGen-LLM.</p></div>
+    </div>
+
+    <div class="prompt-box bad">
+      <span class="label">✗ Ordering A, the prompt almost everyone starts with</span>
+Here is my pricing module. Write unit tests for it.
+
+[the whole implementation pasted below]
+
+The model has exactly one source of truth: the code. Every threshold
+it asserts on is read off your implementation, including the one you
+got wrong. Result: 14 percent of faults detected.
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ Ordering B, the same work in a different sequence</span>
+Write unit tests for a pricing function with this specification.
+Do not ask for the implementation, I am withholding it on purpose.
+
+  price(basket, memberSince) returns the total in whole pence.
+  Members, meaning memberSince &lt; 2020, get 10 percent off.
+  An empty basket costs 0.
+  A negative quantity is rejected with an InvalidBasket error.
+
+Put an assertion exactly on every threshold named above, including
+memberSince of exactly 2020. Assert on returned values, not on which
+helpers were called. Use test doubles only for the clock.
+    </div>
+
+    <div class="tryrow" data-fn="wordcount" data-multiline="1"
+         data-title="Paste the spec you wrote for homework"
+         data-hint="A usable spec is short and dense. Watch the words-per-sentence number more than the total"
+         data-seed="price(basket, memberSince) returns the total in whole pence. Members, meaning memberSince before 2020, get 10 percent off. An empty basket costs 0. A negative quantity is rejected with an InvalidBasket error."
+         data-cta="Measure the spec">
+    </div>
+
+    <div class="callout tip">
+      <p><strong>What good looks like here.</strong> Short sentences, one promise each, every threshold stated as a number. If your spec runs long and winding, the generator will pick a subset of it and you will not know which subset. Splitting a twenty-word sentence into two ten-word promises usually buys you two more tests.</p>
+    </div>
+
+    <div class="scorecard" data-title="Halfway scorecard: the suite you brought"
+         data-foot="Halfway is meant to be half-finished. This is a map of what is left, not a grade on what you have done.">
+      <div class="sc-row"><div class="sc-q">Every test in the module asserts on something
+        <em>Session 2's audit, finished. Zero assertion-free tests left in this one module.</em></div></div>
+      <div class="sc-row"><div class="sc-q">You can name the fault each test would catch
+        <em>One sentence per test, ideally in the test name. Partly counts here, nobody has all of them.</em></div></div>
+      <div class="sc-row"><div class="sc-q">A behaviour-preserving refactor leaves the suite green
+        <em>The change-detector tell. If a few still go red, that is a known list, not a failure.</em></div></div>
+      <div class="sc-row"><div class="sc-q">Generated tests come from the spec, not the finished code
+        <em>Tonight's rule. If you have run the experiment once, that is enough to score partly.</em></div></div>
+      <div class="sc-row"><div class="sc-q">Nothing generated enters the suite without clearing a filter
+        <em>Meta's lesson at small scale. Even a two-line checklist you apply by hand counts.</em></div></div>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 4</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Finish the two-ordering experiment properly.</strong> Three planted bugs rather than one, and record for each whether set A caught it and whether set B caught it. Six results. That table is the most persuasive thing you will ever show your team about generated tests.</li>
+      <li><strong>Write your filter down as a checklist.</strong> Three or four lines. Builds, passes twice, adds a check the suite did not have, asserts on a value rather than an interaction. Put it in the repository next to the tests, not in your head.</li>
+      <li><strong>Turn your spec into the standing prompt.</strong> Save the ordering B prompt as a file in the repo. Next time somebody generates tests for this module, they start from the spec because the spec is what is sitting there ready to paste.</li>
+      <li><strong>If you use Vitest, set <span class="mono">restoreMocks: true</span> now.</strong> Two minutes, and it removes a class of order-dependent failure that will otherwise be blamed on the generator.</li>
+      <li><strong>Bring both test sets to session 4.</strong> Unchanged. You are going to run mutation testing on them, and the scores are going to be more interesting than the coverage numbers were.</li>
+    </ol>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 3 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Tests generated after faulty code detected 14 percent of faults, against 25 percent for tests generated independently. Why?</p>
+      <button class="qopt" type="button">A · The models used for the after-code runs were older and weaker</button>
+      <button class="qopt" type="button">B · Tests written after code are shorter, so they check less</button>
+      <button class="qopt" type="button">C · The code and the tests are mutually consistent, so the tests encode the bug as expected behaviour</button>
+      <p class="qwhy">Konstantinou, Tambon and Papadakis: "incorrect implementations and tests are mutually consistent, masking defects rather than revealing them." Their study also found the effect "persists across different prompting strategies and multi-step workflows", so better prompting does not rescue it.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Playwright's healer agent repairs failing tests. Which documented behaviour needs a policy around it?</p>
+      <button class="qopt" type="button">A · It can skip tests if it determines the underlying functionality is broken</button>
+      <button class="qopt" type="button">B · It rewrites selectors to XPath, which is brittle</button>
+      <button class="qopt" type="button">C · It requires a paid licence per repository</button>
+      <p class="qwhy">Playwright documents that the healer "can skip tests if it determines underlying functionality is broken". A skipped test does not fail the build, so you are left with a green suite that is testing nothing precisely where something broke. Make skipped counts visible and human-approved.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · At Meta, 75 percent of generated test cases built and only 25 percent increased coverage, yet 73 percent of surviving recommendations were accepted. What made that work?</p>
+      <button class="qopt" type="button">A · A larger model, which raised every number in the funnel</button>
+      <button class="qopt" type="button">B · A filter chain that only lets through candidates showing measurable improvement over the existing suite</button>
+      <button class="qopt" type="button">C · Engineers rewrote each generated test before accepting it</button>
+      <p class="qwhy">Meta's framing: the system "verifies that its generated test classes successfully clear a set of filters that assure measurable improvement over the original test suite, thereby eliminating problems due to LLM hallucination." The generator is the cheap part. The gate is the engineering.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Konstantinou, Tambon and Papadakis, 2026</span><span class="note">The 14 versus 25 percent ordering finding, the mutual-consistency sentence, and the caveat that it persists across prompting strategies and multi-step workflows</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Huang and colleagues, 11 models</span><span class="note">57, 12 and 24 percent improvements from correct-code prompting, the 47 percent worse bug detection on real-world incorrect code, and the +34 percent recovery from supplying intent</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Meta TestGen-LLM, FSE 2024</span><span class="note">The full 75 / 57 / 25 / 73 funnel and the filter-chain quote, taught as the architectural lesson rather than a headline</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Playwright Test Agents</span><span class="note">Planner, generator and healer, plus all three documented catches including the skip behaviour, which gets its own policy note</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Copilot /tests and Vitest AI guidance</span><span class="note">GitHub's three caveats verbatim, and Vitest's four named failure modes. Jest and pytest recorded as no first-party AI features documented</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Schäfer, Nadi, Eghbali and Tip, IEEE TSE 2024</span><span class="note">TestPilot's 70.2 percent statement and 52.8 percent branch medians used for calibration only, not taught as a method</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Official learning paths on Copilot test generation</span><span class="note">Microsoft Learn, Coursera and LinkedIn Learning teach the tool surface. This session maps against them and adds the ordering evidence they do not carry</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 3 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The rule</b><span>Generate the test from the specification, not from the implementation. Free to adopt, roughly double the faults found.</span></div>
+      <div class="cheat-item"><b>The numbers</b><span>14 percent of faults after faulty code, 25 percent generated independently. Two independent studies agree.</span></div>
+      <div class="cheat-item"><b>Prompting does not fix it</b><span>The effect persists across prompting strategies and multi-step workflows. It is a sequence problem, not a skill problem.</span></div>
+      <div class="cheat-item"><b>The cheap mitigation</b><span>A plain-language description of intent recovered 34 percent bug detection. You already wrote one in session 2.</span></div>
+      <div class="cheat-item"><b>Filter, do not trust</b><span>Meta's value came from the gate, not the generator. Candidates enter only on measurable improvement.</span></div>
+      <div class="cheat-item"><b>Watch the skip</b><span>Playwright's healer can skip a test if it decides the feature is broken. Count skips out loud or the suite lies.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>You have two test sets and no way to grade them beyond a bug you planted yourself. Session 4 gives you the real instrument: mutation testing, properly, with its operators, its tools and its honest limits. By the end of it you will be able to put a number on which of your two sets was worth keeping.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 3 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="04-mutation-testing.html">Next: Mutation testing →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

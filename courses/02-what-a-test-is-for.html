@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 2 of 6. A test that executes code and asserts nothing is a smoke alarm with the battery out. Audit your own suite, count the assertion-free tests, and rewrite three of them.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="What a test is for - learn ai qa with phoebe">
+<meta property="og:description" content="Session 2 of 6. Assertions are the signal coverage is not. Audit your suite and rewrite three tests to check behaviour at a boundary.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/02-what-a-test-is-for.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What a test is for - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 2 of 6. Count the tests in your suite that assert nothing. The number is usually worse than people expect.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 2 · What a test is for - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 2 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 2 of 6</div>
+    <h1>What a test is <span class="accent">for</span></h1>
+    <p class="sub">A test that executes code and asserts nothing is not a test. It is a smoke alarm with the battery out: mounted on the ceiling, visible from the doorway, reported as present by every inspection, and silent when the room fills with smoke. Tonight you go through the suite you brought and count how many of those you own. Then you rewrite three of them so they check behaviour at a boundary, which is the one thing the research says actually correlates with catching bugs.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Easy</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Bring the module you picked in session 1</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Recap</span>
+      <span class="a2" style="flex:4">3-18 · Assertions, anatomy, change detectors</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: audit your own suite</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ RECAP ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Recap</span>
+      <h2>Where session 1 left you</h2>
+    </div>
+    <p class="lede">Two suites, the same fifteen lines under test, both at one hundred percent line coverage, mutation scores of 25 and 91.7. Coverage could not tell them apart. Tonight is the answer to the obvious follow-up question: <strong>what was the good suite doing that the weak one was not?</strong></p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A count of the assertion-free tests in your own suite, a count of the change-detector tests, and three rewritten tests that assert on behaviour at a boundary. Also a one-sentence habit that quietly fixes the rest of them.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The one-sentence answer, said now so the rest lands<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The strong suite asserted. That is the whole difference, and it is not a slogan, it is a measured finding across five real Java projects.</p>
+        <p>Coverage counts the lines your test walked past. It has no opinion about whether you looked at any of them. A test can call your function, ignore the return value entirely, finish without throwing, and register as full coverage of every line it touched. That test tells you the code does not crash on one input. It does not tell you the code is right, and it will keep not telling you that forever.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Almost every suite has a layer of these. They usually arrive in one of three ways: a test written to satisfy a coverage gate, a test whose assertion was commented out during a flaky patch and never restored, or a generated test that called the function and checked only that it returned something.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the assertion finding</span>
+      <h2>Assertions are the signal that coverage is not</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Two papers, similar scale, similar method, opposite conclusions. Put them side by side and the shape of the answer becomes obvious.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Inozemtseva and Holmes found a low to moderate correlation between coverage and effectiveness across 31,000 suites, while Zhang and Mesbah found assertion count strongly correlated with effectiveness across 6,700 suites built from 24,000 assertions">
+        <style>
+          .q2aH { font: 800 13px Inter, sans-serif; }
+          .q2aB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q2aN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="40" y="50" width="390" height="180" rx="12" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q2aH" x="58" y="82" fill="#3A1503">Session 1: coverage</text>
+        <text class="q2aB" x="58" y="110">Inozemtseva and Holmes, ICSE 2014</text>
+        <text class="q2aB" x="58" y="132">31,000 suites, five systems</text>
+        <text class="q2aB" x="58" y="162">"low to moderate correlation</text>
+        <text class="q2aB" x="58" y="182">with effectiveness"</text>
+        <text class="q2aH" x="58" y="212" fill="#3A1503">Weak signal. Not a target.</text>
+        <rect x="450" y="50" width="390" height="180" rx="12" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q2aH" x="468" y="82" fill="#14532D">Session 2: assertions</text>
+        <text class="q2aB" x="468" y="110">Zhang and Mesbah, ESEC/FSE 2015</text>
+        <text class="q2aB" x="468" y="132">6,700 suites, 24,000 assertions</text>
+        <text class="q2aB" x="468" y="162">"strongly correlates with</text>
+        <text class="q2aB" x="468" y="182">its effectiveness"</text>
+        <text class="q2aH" x="468" y="212" fill="#14532D">Strong signal. Count them.</text>
+        <text class="q2aN" x="60" y="276">Both measured fault detection the same way. They are measuring two different things.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - coverage counts lines walked past, assertions count things checked</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The finding, in the authors' own words<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <div class="prompt-box good">
+          <span class="label">★ The companion paper to session 1</span>
+Zhang and Mesbah, "Assertions Are Strongly Correlated with Test Suite
+Effectiveness", ESEC/FSE 2015.
+
+6,700 test suites built from 24,000 assertions across five real Java
+projects.
+
+"the number of assertions in a test suite strongly correlates with its
+effectiveness", and "assertion coverage is strongly correlated with
+effectiveness".
+
+Their premise line is this session's thesis:
+"coverage without checking for correctness is meaningless."
+        </div>
+        <p>Read that premise line twice, because it is doing more work than it looks. It is not saying coverage is useless. It is saying coverage measured on its own, with no account of whether anything was checked, is not a measurement of quality at all. Coverage plus assertions is a picture. Coverage alone is a headcount of who walked through the room.</p>
+        <p><strong>Google's mutation-testing paper states the mechanism precisely:</strong> code coverage "might be misleading, in particular when program statements are covered but the expected program outcome is not asserted upon." That is the assertion-free test, described by an engineering organisation that runs 500,000,000 tests a day and had to build something better than coverage to survive it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why the two findings do not contradict each other<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>People sometimes read these two papers as a fight. They are not. They are two halves of one sentence.</p>
+        <ul>
+          <li><strong>Coverage is about reach.</strong> Which parts of the system did any test touch. This is a real question with a real use: Google's own guidance keeps it because "a low code coverage number does guarantee that large areas of the product are going completely untested."</li>
+          <li><strong>Assertions are about scrutiny.</strong> Of the parts you touched, how many did you actually inspect the outcome of. That is the part that correlates with catching bugs.</li>
+          <li><strong>You need both, and only one of them is on your dashboard.</strong> Reach without scrutiny is what the green suite lie is made of. Scrutiny without reach is a beautifully tested corner of a system you are not looking at.</li>
+        </ul>
+        <div class="callout tip">
+          <p><strong>The reporting change worth making this week.</strong> Alongside your coverage number, publish an assertion count and a count of tests with zero assertions. It takes one search across the suite, and it is the first metric you have ever put on the dashboard that the research actually backs.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the anatomy of a real test</span>
+      <h2>A test earns its place by answering three questions</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Not every assertion is worth having, so "add assertions" is not the lesson. The lesson is a short interrogation you run on each test, and each layer of it is a harder question than the one below.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four layers a test can reach: it executes the code, it asserts on a returned value, the assertion sits at a boundary, and you can name the fault it would catch">
+        <style>
+          .q2bT { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q2bW { font: 700 12px Inter, sans-serif; fill: #fff; }
+          .q2bV { font: 400 11px Inter, sans-serif; fill: #5F7268; }
+          .q2bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="60" y="42" width="180" height="44" rx="8" fill="#C7D6CC"/>
+        <text class="q2bT" x="74" y="70">It executes the code</text>
+        <text class="q2bV" x="730" y="70">Smoke alarm</text>
+        <rect x="60" y="94" width="340" height="44" rx="8" fill="#BBF7D0"/>
+        <text class="q2bT" x="74" y="122">It asserts on a returned value</text>
+        <text class="q2bV" x="730" y="122">A test</text>
+        <rect x="60" y="146" width="500" height="44" rx="8" fill="#22C55E"/>
+        <text class="q2bT" x="74" y="174">The assertion sits at a boundary</text>
+        <text class="q2bV" x="730" y="174">A good test</text>
+        <rect x="60" y="198" width="640" height="44" rx="8" fill="#15803D"/>
+        <text class="q2bW" x="74" y="226">You can name the fault it would catch</text>
+        <text class="q2bV" x="730" y="226">Earns its place</text>
+        <text class="q2bN" x="60" y="276">Each row is a question. A test that answers only the first one is not testing anything.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the fourth row is the one that deletes tests for you</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The habit: write down what this test would catch<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>One sentence per test, written next to it, in the form "this fails if someone ___". Not a description of what the test does. A description of the bug it stands guard against.</p>
+        <ul>
+          <li><strong>"This fails if someone applies the member discount to a non-member."</strong> Good. Specific, behavioural, and you could hand it to a person who has never seen the code.</li>
+          <li><strong>"This fails if someone changes the price calculation."</strong> Bad, and it is bad in an interesting way. It is a description of the implementation, not the behaviour, and it is the exact tell you will meet in part 3.</li>
+          <li><strong>"This tests the price function."</strong> Not a sentence about a fault at all. When this is the best you can write, the test has no answer, and a test with no answer should be deleted rather than kept.</li>
+        </ul>
+        <p>Deleting tests feels wrong the first few times. It is not. A test with no answer to that question costs you build minutes, review attention and a false sense of safety, and returns nothing. The only thing it protects is the coverage number, and you spent session 1 learning what that is worth.</p>
+        <div class="callout tip">
+          <p><strong>Where to put the sentence.</strong> The test name. If the name reads "this fails if someone applies the member discount to a non-member", the sentence is already written, it shows up in the failure output, and nobody has to maintain a comment.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>At which boundary, and why the boundary is the whole game<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Session 1 ended on a mutant that survived a good suite: <span class="mono">memberSince &lt; 2020</span> becoming <span class="mono">&lt;= 2020</span>. The suite tested 2019. It tested 2021. It never tested exactly 2020, so both versions of the code passed and the difference was invisible.</p>
+        <p>That is not an unlucky example, it is the normal shape of the problem. Every conditional in your code draws a line, and a test placed comfortably on either side of the line proves only that the line exists somewhere in the neighbourhood. A test placed exactly on it proves where.</p>
+        <div class="prompt-box bad">
+          <span class="label">✗ Near the boundary, which is not the boundary</span>
+test("member discount applies", function () {
+  eq(price([{price: 60, qty: 2}], 2019), 108);
+});
+
+Passes on memberSince &lt; 2020. Also passes on &lt;= 2020, on &lt; 2021,
+and on several other wrong versions of the same line.
+        </div>
+        <div class="prompt-box good">
+          <span class="label">★ At the boundary, where the bugs live</span>
+test("member who joined exactly in 2020 still gets the discount",
+  function () {
+    eq(price([{price: 60, qty: 2}], 2020), 108);
+  });
+
+Passes on the real code and fails on the mutant. One test, and it
+pins the line to the exact year the specification says.
+        </div>
+        <p>The pattern generalises past numbers. Empty list and one-element list. The first request and the request that trips the rate limit. The string of exactly maximum length. Zero, and the thing just before zero. If your specification contains a threshold, your suite should contain a test sitting on it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers change-detector tests</span>
+      <h2>The other failure: tests that assert far too much</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">The assertion-free test checks nothing. Its mirror image checks everything, including things nobody promised, and it makes your suite worse in a way that is harder to see because it is loudly, constantly red.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A two-question audit: if a test asserts nothing it is not a test, and if it does assert but breaks on a pure refactor it is a change detector pinned to the implementation rather than the specification">
+        <style>
+          .q2cH { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q2cB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q2cE { font: 700 11px Inter, sans-serif; fill: #5F7268; }
+          .q2cN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="310" y="26" width="260" height="44" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q2cH" x="440" y="54" text-anchor="middle">Does this test assert?</text>
+        <line x1="440" y1="70" x2="440" y2="96" stroke="#C7D6CC" stroke-width="2"/>
+        <line x1="185" y1="96" x2="670" y2="96" stroke="#C7D6CC" stroke-width="2"/>
+        <line x1="185" y1="96" x2="185" y2="112" stroke="#C7D6CC" stroke-width="2"/>
+        <polygon points="179,112 191,112 185,120" fill="#C7D6CC"/>
+        <line x1="670" y1="96" x2="670" y2="112" stroke="#C7D6CC" stroke-width="2"/>
+        <polygon points="664,112 676,112 670,120" fill="#C7D6CC"/>
+        <text class="q2cE" x="250" y="90">No</text>
+        <text class="q2cE" x="580" y="90">Yes</text>
+        <rect x="60" y="120" width="250" height="58" rx="10" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <text class="q2cB" x="78" y="146">Not a test. It is a</text>
+        <text class="q2cB" x="78" y="166">smoke alarm, battery out.</text>
+        <rect x="520" y="120" width="300" height="44" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q2cH" x="670" y="148" text-anchor="middle">Does it break on a pure refactor?</text>
+        <line x1="670" y1="164" x2="670" y2="186" stroke="#C7D6CC" stroke-width="2"/>
+        <line x1="560" y1="186" x2="760" y2="186" stroke="#C7D6CC" stroke-width="2"/>
+        <line x1="560" y1="186" x2="560" y2="204" stroke="#C7D6CC" stroke-width="2"/>
+        <polygon points="554,204 566,204 560,212" fill="#C7D6CC"/>
+        <line x1="760" y1="186" x2="760" y2="204" stroke="#C7D6CC" stroke-width="2"/>
+        <polygon points="754,204 766,204 760,212" fill="#C7D6CC"/>
+        <text class="q2cE" x="508" y="180">Yes</text>
+        <text class="q2cE" x="772" y="180">No</text>
+        <rect x="470" y="212" width="180" height="62" rx="10" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q2cB" x="486" y="238">Change detector.</text>
+        <text class="q2cB" x="486" y="258">Pinned to the code.</text>
+        <rect x="670" y="212" width="180" height="62" rx="10" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q2cB" x="686" y="238">Keep it. It is</text>
+        <text class="q2cB" x="686" y="258">pinned to the spec.</text>
+        <text class="q2cN" x="60" y="316">Run this on every test you brought. Most suites lose rows on both questions.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two questions, and every test in your suite answers both</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Change-detector tests, and the tell that finds them<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Google named the category in their mutation-testing paper. Their words, and note that this is a description of a defect, not a style preference: tests whose <strong>"change-detector nature (specifically testing the current implementation rather than the specification) violates testing best practices and causes brittle tests and false alarms."</strong></p>
+        <p><strong>The tell is mechanical and you can apply it today.</strong> If you have to update a test every time you refactor without changing behaviour, it is pinned to the implementation, not to the specification. Rename a private method, extract a helper, swap a loop for a map, reorder two independent calls. Behaviour unchanged. If tests go red, those tests were never testing behaviour.</p>
+        <p>Three shapes that come up again and again:</p>
+        <ul>
+          <li><strong>Asserting on internal calls.</strong> "The service called the repository once with these arguments." Nobody promised that. The promise was about the value that came back.</li>
+          <li><strong>Snapshot everything.</strong> A whole serialised object compared byte for byte, so adding an unrelated optional field turns the suite red and somebody updates the snapshot without reading it.</li>
+          <li><strong>Asserting the exact wording of a message.</strong> Real if the wording is contractual and shown to users. A change detector if it is a log line.</li>
+        </ul>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The cost is not the red build, it is what the red build trains people to do. A suite that goes red on harmless refactors teaches its own team that red means "somebody moved something", and after enough repetitions the genuine failure arrives and gets the same shrug and the same snapshot update.</p>
+        </div>
+      </div>
+    </details>
+
+    <div class="wipe" data-title="Executes versus checks, on the same function"
+         data-label-a="A test that executes" data-label-b="A test that checks"
+         data-foot="Both give the same line coverage. Only one of them can fail for a reason you would want to know about.">
+      <div class="wipe-a">
+        <p><b>What it does.</b> Calls price with a basket and a year. Finishes without throwing. Asserts nothing about the number that came back.</p>
+        <p><b>Coverage contribution.</b> Every line of the function, marked green.</p>
+        <p><b>What it would catch.</b> A crash. That is the complete list.</p>
+        <p><b>The sentence you can write next to it.</b> None. This is the deletion signal.</p>
+      </div>
+      <div class="wipe-b">
+        <p><b>What it does.</b> Calls price with a two-item basket and the year 2020, and asserts the total equals 108.</p>
+        <p><b>Coverage contribution.</b> Every line of the function, marked green. Identical.</p>
+        <p><b>What it would catch.</b> A wrong discount, a wrong threshold, a wrong rounding, a wrong total.</p>
+        <p><b>The sentence you can write next to it.</b> "This fails if the member threshold moves off 2020."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BUILD-ALONG ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Audit the suite you brought</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">Open the module you picked in session 1 and its tests. Two counts and three rewrites. Nobody sees your numbers, which is exactly why they are worth writing down honestly.</p>
+
+    <div class="tick" data-stages="Read|Ask|Assert|Re-run" data-title="The audit loop, one test at a time"
+         data-foot="Four moves per test. On a small suite this is about twenty minutes of work and it never gets done again from scratch.">
+      <p class="tick-note" data-stage="0"><b>Read.</b> One test. Ignore the name, read the body. Find every assertion in it, and if there are none, mark the test.</p>
+      <p class="tick-note" data-stage="1"><b>Ask.</b> Write the sentence: "this fails if someone ___". If you cannot finish it in one line, the test has no answer and it is a deletion candidate.</p>
+      <p class="tick-note" data-stage="2"><b>Assert or delete.</b> Either add an assertion on the behaviour at the boundary the spec names, or remove the test. Do not leave it in the middle.</p>
+      <p class="tick-note" data-stage="3"><b>Re-run.</b> Then break the code on purpose and re-run. A rewritten test that cannot go red is still not a test.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Count one: assertion-free tests.</strong> Search the suite for test bodies with no assertion call at all. Include the ones whose only assertion is that nothing threw. Write the number down, and write the total test count next to it so you have a ratio rather than a number you can argue with.</p></div>
+      <div class="step"><p><strong>Count two: change-detector tests.</strong> Faster than it sounds. Do one harmless refactor in the module, rename a private helper or extract a block, and run the suite. Every test that goes red is a change detector, and you did not have to judge a single one by hand.</p></div>
+      <div class="step"><p><strong>Pick three tests to rewrite.</strong> Not the easiest three. Take one assertion-free test, one change detector, and one test you have quietly never trusted.</p></div>
+      <div class="step"><p><strong>Rewrite at the boundary.</strong> For each, find the threshold in the specification and put the assertion exactly on it. The value you assert should come from the specification, not from running the code and copying what it printed.</p></div>
+      <div class="step"><p><strong>Prove each rewrite can fail.</strong> Change the code to be wrong on purpose, run, watch it go red, put the code back. A test you have never seen fail is a test you have never verified.</p></div>
+      <div class="step"><p><strong>Undo the refactor from count two.</strong> Or keep it, if it was an improvement. Just do not leave the suite half-red overnight.</p></div>
+    </div>
+
+    <div class="prompt-box bad">
+      <span class="label">✗ Three tests that will be in your suite tonight</span>
+test("price works", function () {
+  price([{price: 60, qty: 2}], 2019);        // asserts nothing
+});
+
+test("returns a number", function () {
+  ok(typeof price([{price: 60, qty: 2}], 2019) === "number");
+});                                          // asserts almost nothing
+
+test("calls the discount helper once", function () {
+  ok(spy.callCount === 1);                   // change detector
+});
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ The same three, rewritten to check behaviour at a boundary</span>
+test("this fails if a member who joined in 2020 loses the discount",
+  function () { eq(price([{price: 60, qty: 2}], 2020), 108); });
+
+test("this fails if a non-member is given the member discount",
+  function () { eq(price([{price: 60, qty: 2}], 2021), 120); });
+
+test("this fails if an empty basket is not free",
+  function () { eq(price([], 2019), 0); });
+    </div>
+
+    <div class="tryrow" data-fn="wordcount" data-multiline="1"
+         data-title="Paste one test from your suite"
+         data-hint="Paste the body of a single test, then read the words-per-sentence number"
+         data-seed="test('member who joined exactly in 2020 still gets the discount', function () { eq(price([{price: 60, qty: 2}], 2020), 108); });"
+         data-cta="Measure this test">
+    </div>
+
+    <div class="callout tip">
+      <p><strong>How to read that number.</strong> A test you cannot take in at a glance is usually testing more than one thing, and when it fails you will not know which. If a single test runs long, the fix is almost never a comment. It is two tests, each with its own sentence, each able to fail on its own.</p>
+    </div>
+
+    <div class="stakes" data-base="0" data-unit="tests that earn their place" data-title="Score the three you just rewrote"
+         data-foot="Three rewritten tests, four points each if you did all four. Tick honestly, this meter is for you.">
+      <label><input type="checkbox" data-delta="3"> Each one asserts on a returned value, not on a call that happened</label>
+      <label><input type="checkbox" data-delta="3"> Each assertion sits exactly on a threshold the spec names</label>
+      <label><input type="checkbox" data-delta="3"> You watched each one go red against deliberately broken code</label>
+      <label><input type="checkbox" data-delta="3"> Each test name is the sentence "this fails if someone ___"</label>
+      <label><input type="checkbox" data-delta="-4" data-trap="1"> The expected values came from running the code and copying the output</label>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 3</h2>
+      <span class="tag exercise">25 min</span>
+    </div>
+    <ol>
+      <li><strong>Finish the audit on the whole module.</strong> Not the whole repository. The one module you picked in session 1, every test it has.</li>
+      <li><strong>Delete the tests with no answer.</strong> The ones where you could not finish "this fails if someone ___". Commit the deletion on its own, with the reason in the message, so it is reviewable as a decision rather than hidden in a refactor.</li>
+      <li><strong>Rename every surviving test to its sentence.</strong> This is the highest value-per-minute task in the whole course. The names become documentation and the failure output starts telling you what broke instead of which function was involved.</li>
+      <li><strong>Write the specification down.</strong> A short plain-language description of what the module promises: inputs, outputs, thresholds, error cases. Half a page. Session 3 needs it, and you will find writing it changes at least one test.</li>
+      <li><strong>Record two numbers.</strong> Assertion-free tests before and after. Bring both.</li>
+    </ol>
+    <div class="callout tip">
+      <p><strong>Do not skip item 4.</strong> Session 3 is built on the difference between a test written from a specification and a test written from the finished code, and there are two independent studies saying that difference is worth roughly double. You will need the specification in your hand to see it.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 2 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · Zhang and Mesbah built 6,700 suites from 24,000 assertions. What did they find?</p>
+      <button class="qopt" type="button">A · Assertion count is unrelated to how many faults a suite catches</button>
+      <button class="qopt" type="button">B · Assertion count strongly correlates with suite effectiveness, unlike coverage</button>
+      <button class="qopt" type="button">C · Suites with more assertions are slower and therefore worse</button>
+      <p class="qwhy">Their words: "the number of assertions in a test suite strongly correlates with its effectiveness", and "assertion coverage is strongly correlated with effectiveness". Set against session 1's low-to-moderate correlation for coverage, that is the whole argument of this course.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · You refactor a module without changing any behaviour and eleven tests go red. What have you learned?</p>
+      <button class="qopt" type="button">A · The refactor was wrong and should be reverted</button>
+      <button class="qopt" type="button">B · The suite is thorough, which is why it noticed</button>
+      <button class="qopt" type="button">C · Those eleven tests are change detectors, pinned to the implementation rather than the spec</button>
+      <p class="qwhy">Google's term for exactly this: tests whose "change-detector nature (specifically testing the current implementation rather than the specification) violates testing best practices and causes brittle tests and false alarms." Behaviour did not change, so a behavioural test should not have moved.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · A test calls your function and asserts nothing. Your coverage tool reports the lines as covered. What should you do with it?</p>
+      <button class="qopt" type="button">A · Give it an assertion on the behaviour, or delete it</button>
+      <button class="qopt" type="button">B · Leave it, since it still proves the code does not crash</button>
+      <button class="qopt" type="button">C · Keep it but exclude it from the coverage report</button>
+      <p class="qwhy">Google's mutation paper on why coverage misleads: statements "are covered but the expected program outcome is not asserted upon." If you cannot write the sentence "this fails if someone ___", the test has no answer and it should go rather than stay.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Zhang and Mesbah, ESEC/FSE 2015</span><span class="note">6,700 suites from 24,000 assertions across five Java projects. Both findings taught in full, plus the premise line used as this session's thesis</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google mutation paper, change-detector tests</span><span class="note">The named category and the quoted definition, plus the mechanism sentence on why coverage misleads when outcomes are not asserted upon</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Inozemtseva and Holmes, ICSE 2014</span><span class="note">Revisited as the explicit contrast: coverage weak, assertions strong, and the two measuring different properties of a suite</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Google on coverage as a floor detector</span><span class="note">The low-coverage asymmetry taught here as the reason to keep coverage. The bands and the logarithmic-gains warning were session 1</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">AI-generated tests and where assertions go wrong</span><span class="note">Named here as the next problem. Session 3 covers generation, the ordering effect and the filter chain properly</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 2 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The thesis</b><span>A test that executes code and asserts nothing is a smoke alarm with the battery out. Present, visible, silent.</span></div>
+      <div class="cheat-item"><b>The finding</b><span>Zhang and Mesbah: assertion count strongly correlates with effectiveness. Coverage, from session 1, does not.</span></div>
+      <div class="cheat-item"><b>The premise line</b><span>"Coverage without checking for correctness is meaningless." One sentence, whole course.</span></div>
+      <div class="cheat-item"><b>The four layers</b><span>Executes, asserts, asserts at a boundary, and you can name the fault it catches. Only the fourth earns its place.</span></div>
+      <div class="cheat-item"><b>The sentence</b><span>"This fails if someone ___." Put it in the test name. No answer means delete rather than keep.</span></div>
+      <div class="cheat-item"><b>The change-detector tell</b><span>Refactor without changing behaviour. Everything that goes red was pinned to the implementation, not the spec.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>You now have a specification written down and a suite you have actually read. Session 3 hands both to a generator, twice, in two different orders, and one of those orders finds nearly double the faults of the other. You will watch your own module produce both results.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 2 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="03-generating-tests.html">Next: Generating tests →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

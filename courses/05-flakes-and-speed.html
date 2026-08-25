@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 5 of 6. About 84 percent of pass-to-fail transitions at Google involve a flaky test, and flakiness scales with test size: small 0.5 percent, medium 1.6 percent, large 14 percent.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Flakes and speed - learn ai qa with phoebe">
+<meta property="og:description" content="Session 5 of 6. A suite nobody trusts is a suite nobody reads. The published numbers on flakiness, why size predicts it, and what to do tonight.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/05-flakes-and-speed.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Flakes and speed - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 5 of 6. Flakiness scales with test size, and that is the finding you can act on tonight.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 5 · Flakes and speed - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 5 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 5 of 6</div>
+    <h1>Flakes and <span class="accent">speed</span></h1>
+    <p class="sub">A suite nobody trusts is a suite nobody reads, and flakiness is how that trust dies. Not in one dramatic incident, but over about six weeks of red builds that turned out to be nothing, until the team learns that red means rerun. The numbers on this are published, they are large, and one of them tells you exactly which test to go fix tonight.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Hands-on</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Bring the suite timing you wrote down after session 4</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Recap</span>
+      <span class="a2" style="flex:4">3-16 · The numbers, and what predicts them</span>
+      <span class="a3" style="flex:5">16-38 · Build-along: shrink it or quarantine it</span>
+      <span class="a4" style="flex:1">38-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers the scale of the problem</span>
+      <h2>Red usually does not mean broken</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Start with the definition, because half the arguments about flaky tests are people using the word differently. Google's is precise and unarguable: a flaky test is <strong>"a test that exhibits both a passing and a failing result with the same code."</strong> Same commit, same inputs, two answers. Then the numbers, from the largest published continuous testing environment anybody has written up.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A gauge showing that about 84 percent of pass to fail transitions at Google involve a flaky test, alongside 1.5 percent of runs and 16 percent of tests">
+        <style>
+          .q5aB { font: 800 30px Inter, sans-serif; fill: #C2410C; }
+          .q5aS { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q5aK { font: 800 15px Inter, sans-serif; fill: #14532D; }
+          .q5aT { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q5aN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <path d="M 320 170 A 120 120 0 0 1 560 170" fill="none" stroke="#E1EBE4" stroke-width="26" stroke-linecap="round"/>
+        <path d="M 320 170 A 120 120 0 0 1 545.2 112.2" fill="none" stroke="#C2410C" stroke-width="26" stroke-linecap="round"/>
+        <text class="q5aB" x="440" y="150" text-anchor="middle">84%</text>
+        <text class="q5aS" x="440" y="176" text-anchor="middle">of pass-to-fail transitions</text>
+        <text class="q5aK" x="40" y="82">1.5 percent</text>
+        <text class="q5aT" x="40" y="104">of all test runs report</text>
+        <text class="q5aT" x="40" y="124">a flaky result</text>
+        <text class="q5aK" x="620" y="82">Almost 16 percent</text>
+        <text class="q5aT" x="620" y="104">of our tests have some</text>
+        <text class="q5aT" x="620" y="124">level of flakiness</text>
+        <text class="q5aN" x="40" y="206">When the build goes red, the base rate says it is probably not a regression.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the colour of your build is a much weaker signal than it looks</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The three numbers, and the one that reframes everything<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>You met these in session 1 as a warm-up. Tonight they are the working material, so slow down on the third one.</p>
+        <ul>
+          <li><strong>A continual rate of about 1.5 percent of all test runs reporting a flaky result.</strong> Small as a percentage, enormous as an absolute number at any scale, and it never goes to zero.</li>
+          <li><strong>Almost 16 percent of tests have some level of flakiness.</strong> Not sixteen percent of failures. Sixteen percent of the suite, carrying some non-determinism.</li>
+          <li><strong>About 84 percent of the transitions from pass to fail involve a flaky test.</strong> Read that again with your own dashboard in mind. Roughly five in six times a green thing goes red, a flake is in the picture.</li>
+        </ul>
+        <div class="callout tip">
+          <p><strong>Why this is a trust problem before it is a technical one.</strong> If five out of six red builds turn out to be nothing, a rational engineer learns to rerun before reading. That habit is correct on the numbers and catastrophic on the sixth build. Flakiness does not just waste time, it trains your team to ignore your suite, and it trains them well.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Flaky is a property of the test, not of the day<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The definition rules out the two most common excuses. It says <em>with the same code</em>, so "the environment was weird" does not make a test not flaky. That is exactly what flakiness is: sensitivity to something that is not the code under test. Infrastructure, clocks, ordering, network, available memory, whatever it happens to be.</p>
+        <p>It also rules out the reverse move. A test that fails once and passes on rerun has demonstrated both results on the same commit. It is flaky now, by definition, whether or not you can explain it yet. Not being able to reproduce it is a fact about your tooling, not evidence of innocence.</p>
+        <p>The practical consequence is that "flaky" is a label you can apply immediately and confidently on one observation. You do not have to win a diagnosis argument first, which matters, because the diagnosis argument is where flaky-test work goes to die.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers what actually predicts flakiness</span>
+      <h2>Flakiness scales with test size</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">This is the finding that turns a vague complaint into a work item, and it is the single most useful thing in tonight's session. Google looked for what predicts a test being flaky, and the answer was not the framework, the language or the team. It was how big the test is.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flakiness rate by test size at Google: small tests 0.5 percent, medium tests 1.6 percent, large tests 14 percent">
+        <style>
+          .q5bL { font: 700 13px Inter, sans-serif; fill: #14201A; }
+          .q5bV { font: 800 15px Inter, sans-serif; fill: #14201A; }
+          .q5bW { font: 800 15px Inter, sans-serif; fill: #fff; }
+          .q5bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+          .q5bT { font: 700 13px Inter, sans-serif; fill: #14532D; }
+        </style>
+        <text class="q5bT" x="40" y="38">Flakiness rate by test size</text>
+        <text class="q5bL" x="285" y="108" text-anchor="end">Small tests</text>
+        <rect x="300" y="80" width="17" height="44" rx="4" fill="#22C55E"/>
+        <text class="q5bV" x="329" y="109">0.5%</text>
+        <text class="q5bL" x="285" y="178" text-anchor="end">Medium tests</text>
+        <rect x="300" y="150" width="55" height="44" rx="4" fill="#15803D"/>
+        <text class="q5bV" x="367" y="179">1.6%</text>
+        <text class="q5bL" x="285" y="248" text-anchor="end">Large tests</text>
+        <rect x="300" y="220" width="480" height="44" rx="4" fill="#C2410C"/>
+        <text class="q5bW" x="318" y="249">14%</text>
+        <text class="q5bN" x="40" y="286">Binary size correlates at R-squared 0.82, RAM at 0.76. Size is more predictive than tool.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a large test is roughly twenty-eight times flakier than a small one</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What this means for a generated test suite specifically<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Take the three numbers seriously as a ratio, not just as a ranking. Small 0.5 percent, medium 1.6, large 14. Moving one test from large to small is not a marginal improvement in reliability, it is close to two orders of magnitude.</p>
+        <p>Google's supporting evidence is that binary size correlates with flakiness at <strong>R-squared 0.82</strong> and memory at <strong>0.76</strong>, and their own conclusion is blunt: <strong>"size is more predictive than tool"</strong>. Whatever framework you migrate to, you carry your flakiness with you if the tests stay the same shape.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>Here is where this collides with the subject of this course. Ask a model to "write a test for the checkout discount rule" without constraining it, and there is a good chance you get a browser test: launch the app, click through to checkout, add an item, read the total off the page. It is a perfectly reasonable-looking test. It is also large by every definition Google uses, and you have just bought a fourteen percent flakiness rate to verify a piece of arithmetic that a small test would have pinned down deterministically in four milliseconds.</p>
+        </div>
+        <p><strong>The rule to take back to your team.</strong> AI that reaches for a browser test where a unit test would do is buying flakiness by construction. Not by writing bad code, not by hallucinating, simply by choosing the wrong size. So constrain the size in the prompt, and review generated tests for size before you review them for correctness. Size is the cheaper thing to check and the more expensive thing to get wrong.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Choosing the size deliberately, every time<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>None of this says browser tests are bad. It says they are expensive in a currency most teams do not price, and that the price should be paid on purpose. Some behaviour genuinely only exists in a real browser, and for that behaviour a large test is the right instrument.</p>
+        <p>The question to ask of every test, generated or hand-written, is simply: <strong>what is the smallest test that could still catch this?</strong> If the answer is smaller than what you have, you are paying a flakiness premium for nothing. Ask it during review, while changing the answer is cheap. Asking it six months later means a rewrite, and rewrites of tests are the work that never gets prioritised.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers what flakiness does to your signal</span>
+      <h2>The part of the suite doing the work is smaller than you think</h2>
+      <span class="tag concept">4 min live</span>
+    </div>
+    <p class="lede">Session 1 opened on this funnel as a provocation. Tonight it is evidence for something specific: flakiness does not merely add noise on top of a good signal, it corrupts the strategies you would otherwise use to manage a large suite.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Of 5,562,881 Google test targets, 91.3 percent never failed, 2.07 percent both passed and failed, and only 1.23 percent ever caught a real developer-introduced breakage">
+        <style>
+          .q5cT { font: 700 13px Inter, sans-serif; fill: #14201A; }
+          .q5cW { font: 700 13px Inter, sans-serif; fill: #fff; }
+          .q5cM { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q5cN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="60" y="36" width="760" height="40" rx="8" fill="#E1EBE4"/>
+        <text class="q5cT" x="440" y="61" text-anchor="middle">5,562,881 test targets</text>
+        <rect x="120" y="88" width="640" height="40" rx="8" fill="#C7D6CC"/>
+        <text class="q5cT" x="440" y="113" text-anchor="middle">91.3 percent never failed once</text>
+        <rect x="210" y="140" width="460" height="40" rx="8" fill="#5F7268"/>
+        <text class="q5cW" x="440" y="165" text-anchor="middle">2.07 percent both passed and failed</text>
+        <rect x="290" y="192" width="300" height="40" rx="8" fill="#15803D"/>
+        <text class="q5cW" x="440" y="217" text-anchor="middle">1.23 percent caught a real break</text>
+        <text class="q5cM" x="440" y="258" text-anchor="middle">Inside that 2.07 percent band, 46,694 targets were flakes.</text>
+        <text class="q5cN" x="40" y="286">Memon et al., ICSE-SEIP 2017. The green band is the whole return on the suite.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - flakes sit exactly where the real failures live, which is the problem</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The consequence they drew, in their own words<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The funnel is striking, but the operational finding underneath it is the one to take home. Once flakes make up most of your recently-failing tests, the obvious optimisation stops working.</p>
+        <div class="prompt-box bad">
+          <span class="label">✗ The heuristic that stops working</span>
+Memon et al., ICSE-SEIP 2017, on 5,562,881 test targets:
+
+91.3 percent never failed once.
+2.07 percent both passed and failed at some point.
+Of those, 46,694 were flakes.
+Only 1.23 percent ever caught a developer-introduced breakage.
+
+"we could not rely on regression test selection heuristics such as
+'rerun tests that failed recently' as we would end up mostly
+re-running flaky tests."
+        </div>
+        <p>"Rerun tests that failed recently" is a sensible instinct and it is what almost every hand-rolled test-selection script does. The finding is that in a suite with real flakiness, that heuristic mostly selects your flakes, because flakes fail more often than real regressions do. You have built a system that spends its budget re-running the tests least likely to tell you anything.</p>
+        <p>Which closes the loop with Part 2. Flakiness is not an annoyance sitting alongside your test strategy. It is an input to your test strategy, and if you do not measure it, the optimisations you layer on top will quietly point in the wrong direction.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section class="section" id="part-4">
+    <div class="section-kicker">
+      <span class="klabel">Part 4 · covers documented mitigations</span>
+      <h2>What to actually do, from teams who published their answer</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">There is a great deal of folklore about fixing flaky tests. This section sticks to mitigations that a named team has written down and put its name to, which turns out to be a short and unglamorous list.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five documented mitigations for flaky tests, from rerunning only failing tests through to a dedicated team">
+        <style>
+          .q5dH { font: 700 12px Inter, sans-serif; fill: #14532D; }
+          .q5dC { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q5dN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+          .q5dT { font: 700 13px Inter, sans-serif; fill: #14532D; }
+        </style>
+        <text class="q5dT" x="40" y="34">Cheapest on the left, most committed on the right</text>
+        <line x1="60" y1="120" x2="820" y2="120" stroke="#C7D6CC" stroke-width="3"/>
+        <circle cx="60" cy="120" r="13" fill="#BBF7D0" stroke="#15803D" stroke-width="2"/>
+        <circle cx="250" cy="120" r="13" fill="#BBF7D0" stroke="#15803D" stroke-width="2"/>
+        <circle cx="440" cy="120" r="13" fill="#22C55E" stroke="#15803D" stroke-width="2"/>
+        <circle cx="630" cy="120" r="13" fill="#22C55E" stroke="#15803D" stroke-width="2"/>
+        <circle cx="820" cy="120" r="13" fill="#15803D" stroke="#14532D" stroke-width="2"/>
+        <text class="q5dH" x="60" y="88" text-anchor="start">Re-run failures</text>
+        <text class="q5dC" x="60" y="156" text-anchor="start">Failures only,</text>
+        <text class="q5dC" x="60" y="174" text-anchor="start">log every rerun</text>
+        <text class="q5dH" x="250" y="88" text-anchor="middle">Mark it flaky</text>
+        <text class="q5dC" x="250" y="156" text-anchor="middle">Reports only after</text>
+        <text class="q5dC" x="250" y="174" text-anchor="middle">3 fails in a row</text>
+        <text class="q5dH" x="440" y="88" text-anchor="middle">Quarantine</text>
+        <text class="q5dC" x="440" y="156" text-anchor="middle">Monitoring pulls it out</text>
+        <text class="q5dC" x="440" y="174" text-anchor="middle">and files the bug</text>
+        <text class="q5dH" x="630" y="88" text-anchor="middle">Blame the change</text>
+        <text class="q5dC" x="630" y="156" text-anchor="middle">Tooling names the</text>
+        <text class="q5dC" x="630" y="174" text-anchor="middle">guilty submission</text>
+        <text class="q5dH" x="820" y="88" text-anchor="end">A dedicated team</text>
+        <text class="q5dC" x="820" y="156" text-anchor="end">Someone owns this</text>
+        <text class="q5dC" x="820" y="174" text-anchor="end">as an actual job</text>
+        <text class="q5dN" x="40" y="226">Google's published list. Most teams stop at the first one and call it a strategy.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a rerun buys you time, it does not buy you a fix</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Retries as a diagnostic, never as a fix<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Playwright ships the most clearly specified retry model of the mainstream runners, and its definition is worth adopting whatever tool you use: a flaky test is one that <strong>"failed on the first run, but passed when retried"</strong>. Results land in three buckets rather than two, and retries are configurable globally, per file, or per group.</p>
+        <p>Note what that gives you that a plain rerun does not. A silent rerun turns a flake into a pass and the information disappears. A runner that reports "flaky" as its own outcome turns every rerun into a measurement, and measurements accumulate into a list of your worst tests without anyone doing extra work.</p>
+        <div class="callout tip">
+          <p><strong>The line to hold in review.</strong> Retries are a diagnostic that buys you time. They are not a fix. Turning retries up until the suite goes green is the single fastest way to arrive at a suite that is always green and means nothing, which is the same failure this course opened with, reached by a different road.</p>
+        </div>
+        <p>Google's own framing of the marking mitigation is worth borrowing too: a test marked flaky reports failure only after failing <strong>three times in a row</strong>. That is honest about what it is. It is not claiming the test is fixed, it is trading a defined amount of sensitivity for a defined amount of noise, and writing the trade down where everyone can see it.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Quarantine, done in a way that does not rot<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Quarantine is the most useful of these and the easiest to do badly. Done well it means: the test is pulled out of the blocking run, a bug is filed automatically, and the quarantine list is visible and small. Done badly it means a test was disabled once, nobody filed anything, and two years later nobody remembers whether that behaviour is covered at all.</p>
+        <p>Two rules keep it honest. Every quarantined test has a ticket, and the quarantine list has a length somebody is embarrassed by. Google pairs quarantine with automated monitoring and bug filing precisely so the decision leaves a trace. A quarantine with no trace is just a deletion with extra steps.</p>
+        <p>The other piece of their list that most teams never build is tooling to identify the submission that changed a test's flakiness. It sounds exotic, but the cheap version is within reach: record the flaky outcome with a commit, and you can at least bisect when a test starts misbehaving instead of arguing about it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 5 ============ -->
+  <section class="section" id="part-5">
+    <div class="section-kicker">
+      <span class="klabel">Part 5 · covers brittle selectors</span>
+      <h2>The biggest single source in generated UI tests</h2>
+      <span class="tag concept">3 min live</span>
+    </div>
+    <p class="lede">Short section, and pointed at one specific habit. When a model writes a browser test, it very often reaches for whatever selector uniquely identifies the element in the DOM it is looking at right now. That is how you get a locator built out of nested div positions, and it is why the test fails the week someone adds a wrapper.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Playwright locator priority order from getByRole down to CSS or XPath as a last resort">
+        <style>
+          .q5eT { font: 700 13px Inter, sans-serif; fill: #14532D; }
+          .q5eB { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q5eD { font: 800 12px Inter, sans-serif; fill: #fff; }
+          .q5eN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q5eT" x="60" y="42">Reach for these first</text>
+        <text class="q5eT" x="460" y="42">Then these, and only then</text>
+        <rect x="60" y="58" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <circle cx="88" cy="80" r="12" fill="#15803D"/>
+        <text class="q5eD" x="88" y="85" text-anchor="middle">1</text>
+        <text class="q5eB" x="112" y="85">getByRole - the accessibility contract</text>
+        <rect x="60" y="118" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <circle cx="88" cy="140" r="12" fill="#15803D"/>
+        <text class="q5eD" x="88" y="145" text-anchor="middle">2</text>
+        <text class="q5eB" x="112" y="145">getByText - what the user reads</text>
+        <rect x="60" y="178" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <circle cx="88" cy="200" r="12" fill="#15803D"/>
+        <text class="q5eD" x="88" y="205" text-anchor="middle">3</text>
+        <text class="q5eB" x="112" y="205">getByLabel - the form control</text>
+        <rect x="60" y="238" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <circle cx="88" cy="260" r="12" fill="#15803D"/>
+        <text class="q5eD" x="88" y="265" text-anchor="middle">4</text>
+        <text class="q5eB" x="112" y="265">getByPlaceholder - when no label exists</text>
+        <rect x="460" y="58" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
+        <circle cx="488" cy="80" r="12" fill="#22C55E"/>
+        <text class="q5eD" x="488" y="85" text-anchor="middle">5</text>
+        <text class="q5eB" x="512" y="85">getByAltText - images and icons</text>
+        <rect x="460" y="118" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
+        <circle cx="488" cy="140" r="12" fill="#22C55E"/>
+        <text class="q5eD" x="488" y="145" text-anchor="middle">6</text>
+        <text class="q5eB" x="512" y="145">getByTitle - the title attribute</text>
+        <rect x="460" y="178" width="360" height="44" rx="8" fill="#F0FDF4" stroke="#22C55E" stroke-width="1.5"/>
+        <circle cx="488" cy="200" r="12" fill="#22C55E"/>
+        <text class="q5eD" x="488" y="205" text-anchor="middle">7</text>
+        <text class="q5eB" x="512" y="205">getByTestId - a contract you own</text>
+        <rect x="460" y="238" width="360" height="44" rx="8" fill="#FEF2F2" stroke="#991B1B" stroke-width="1.5"/>
+        <circle cx="488" cy="260" r="12" fill="#991B1B"/>
+        <text class="q5eD" x="488" y="265" text-anchor="middle">8</text>
+        <text class="q5eB" x="512" y="265" fill="#991B1B">CSS or XPath - last resort only</text>
+        <text class="q5eN" x="60" y="316">"Prefer user-facing attributes to XPath or CSS selectors." Your DOM changes. Roles do not.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the top of this list survives a redesign, the bottom does not</figcaption>
+    </figure>
+
+    <div class="callout tip">
+      <p><strong>The vendor's own reasoning, which is the useful part.</strong> Playwright says to prefer user-facing attributes because "Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests". A role, a label or visible text is part of what your product promises a user. A div path is an implementation detail that nobody agreed to keep stable, so a test built on one is a change-detector wearing a browser.</p>
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ The constraint to put in the prompt, before the request</span>
+Write this as the smallest test that can still catch the bug. Prefer a
+unit test; only use a browser test if the behaviour genuinely requires
+a real browser.
+
+If it must be a browser test, locate elements by role, then text, then
+label, then placeholder, alt, title or test id. Do not use CSS or XPath
+selectors. Do not add waits with fixed durations.
+    </div>
+  </section>
+
+  <!-- ============ BUILD-ALONG ============ -->
+  <section class="section" id="demo-5">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Find your flakiest test and deal with it tonight</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">One test. Not a strategy document, not a backlog epic. You are going to find the worst offender in the suite you brought, classify it by size, and leave with it either genuinely smaller or deliberately quarantined with a ticket. Both outcomes count as finishing.</p>
+
+    <div class="tick" data-stages="Find|Classify|Decide|Record" data-title="Triage, four moves, one test">
+      <p class="tick-note" data-stage="0"><b>Find.</b> Whatever history you have: CI reruns, the test everyone reruns by reflex, the slowest test you timed after session 4. Start there, they are usually the same test.</p>
+      <p class="tick-note" data-stage="1"><b>Classify.</b> Small, medium or large. Does it touch a real browser, a real network, a real database, another process? Each yes moves it up a size.</p>
+      <p class="tick-note" data-stage="2"><b>Decide.</b> Shrink it, or quarantine it on purpose. Deciding not to decide is what leaves it failing intermittently for another year.</p>
+      <p class="tick-note" data-stage="3"><b>Record.</b> A ticket if quarantined, a note on what got smaller if shrunk. Untraced decisions become somebody else's mystery.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Pick your candidate in two minutes, not twenty.</strong> If you have flaky reporting, sort by it. If you do not, ask the person next to you which test they rerun without reading. That answer is reliable and takes ten seconds.</p></div>
+      <div class="step"><p><strong>Classify it by size honestly.</strong> Count what it touches outside its own process: a browser, the network, a real database, the filesystem, a clock, another service. Zero of those is small. One or two is medium. Anything more is large and comes with the fourteen percent.</p></div>
+      <div class="step"><p><strong>Ask the shrinking question.</strong> What is the smallest test that could still catch the bug this test exists to catch? Very often the answer is a small test on one function plus a much thinner browser test that only checks the wiring.</p></div>
+      <div class="step"><p><strong>If it is a browser test, check its locators.</strong> Any CSS or XPath selector goes on the list to replace with a role, text or label locator. This is frequently the entire fix, and it takes minutes.</p></div>
+      <div class="step"><p><strong>If you cannot shrink it tonight, quarantine it deliberately.</strong> Out of the blocking run, ticket filed, name on the ticket. That is a decision with a trace, and it is far better than leaving it to fail one build in six.</p></div>
+      <div class="step"><p><strong>Write down what it was costing.</strong> Reruns per week times minutes per rerun, plus the builds people ignored because of it. You will want that number when you ask for time to do the next five.</p></div>
+    </div>
+
+    <div class="stakes" data-base="120" data-unit="min/week on red builds" data-lower-is-better="1"
+         data-title="What an untrusted suite costs you every week" data-foot="Tick what is true tonight. The trap is the fix everyone tries first, and it is the one that ends in a green suite that means nothing.">
+      <label><input type="checkbox" data-delta="-30"> The flakiest large test was rewritten as a small one</label>
+      <label><input type="checkbox" data-delta="-25"> Flaky tests are quarantined with a ticket, not silently disabled</label>
+      <label><input type="checkbox" data-delta="-20"> Browser tests locate by role, text or label, never by CSS or XPath</label>
+      <label><input type="checkbox" data-delta="-15"> Flaky outcomes are reported as their own bucket, not swallowed by a rerun</label>
+      <label><input type="checkbox" data-delta="35" data-trap="1"> Retries get turned up until the suite goes green</label>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> One test that is smaller or one test that is quarantined on purpose, the size classification that tells you which of the others to do next, and the number that justifies the time. That is a flaky-test programme. Everything else is a wiki page.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 6</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Classify your whole suite by size.</strong> Rough counts are fine: how many small, medium, large. This takes twenty minutes and it is the map you will use for the next year.</li>
+      <li><strong>Turn on flaky reporting as its own outcome.</strong> If your runner supports a flaky bucket, enable it. If it does not, log reruns somewhere. You cannot manage what gets swallowed by a silent retry.</li>
+      <li><strong>Grep your browser tests for CSS and XPath locators.</strong> Count them. Convert the three in your most-rerun test to role, text or label locators.</li>
+      <li><strong>Write your team's retry policy in one paragraph.</strong> How many retries, reported how, and the explicit statement that a retry is a diagnostic and not a fix. One paragraph beats an unwritten habit.</li>
+      <li><strong>Bring three numbers to session 6.</strong> Your suite's wall-clock time, your rough flaky rate, and your survivor count from session 4. Session 6 turns those three into a gate you can defend in front of people who do not enjoy tests.</li>
+    </ol>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 5 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · Your build just went from green to red. On Google's published numbers, what is the most likely explanation?</p>
+      <button class="qopt" type="button">A · A real regression, since that is what a failing test means</button>
+      <button class="qopt" type="button">B · A flaky test, since about 84 percent of pass-to-fail transitions involve one</button>
+      <button class="qopt" type="button">C · An infrastructure outage, which is the usual cause of intermittent failures</button>
+      <p class="qwhy">Roughly five in six red transitions involve a flake. That is why teams learn to rerun before reading, and why that entirely rational habit is so dangerous on the sixth build.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · Google measured flakiness against several variables. What turned out to predict it best?</p>
+      <button class="qopt" type="button">A · The testing framework, which is why migrations are worth the effort</button>
+      <button class="qopt" type="button">B · How recently the test was written</button>
+      <button class="qopt" type="button">C · Test size: 0.5 percent for small, 1.6 for medium, 14 for large</button>
+      <p class="qwhy">Binary size correlates at R-squared 0.82 and RAM at 0.76, and their conclusion is that size is more predictive than tool. This is why a generated browser test standing in for a unit test buys flakiness by construction.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Why did Memon et al. conclude they could not rely on "rerun tests that failed recently"?</p>
+      <button class="qopt" type="button">A · Because in a suite with real flakiness, that heuristic mostly re-runs the flakes</button>
+      <button class="qopt" type="button">B · Because rerunning any test twice makes the results statistically invalid</button>
+      <button class="qopt" type="button">C · Because their suite was too large for any test selection to be worthwhile</button>
+      <p class="qwhy">Their words: they "would end up mostly re-running flaky tests". Flakes fail more often than real regressions, so a recency heuristic spends its budget on the tests least likely to tell you anything.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google on flaky tests</span><span class="note">The definition, 1.5 percent of runs, almost 16 percent of tests, 84 percent of pass-to-fail transitions, and the published mitigation list</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google on where flaky tests come from</span><span class="note">Flakiness by size at 0.5, 1.6 and 14 percent, binary size at R-squared 0.82, RAM at 0.76, and "size is more predictive than tool"</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Memon et al., ICSE-SEIP 2017</span><span class="note">5,562,881 targets, the 91.3 / 2.07 / 1.23 funnel, 46,694 flakes, and the verbatim consequence for regression test selection</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Playwright test retries</span><span class="note">The flaky definition, three result buckets, and retries configurable globally, per file or per group. Taught as a diagnostic, not a fix</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Playwright best practices and locators</span><span class="note">The user-facing attributes guidance and the full priority order down to CSS and XPath as a last resort</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Flaky-test root cause taxonomy</span><span class="note">Deliberately not taught by category percentage. The published split could not be verified, so this session teaches size instead, which could</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 5 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The definition</b><span>A test that exhibits both a passing and a failing result with the same code. One observation is enough.</span></div>
+      <div class="cheat-item"><b>The reframing number</b><span>About 84 percent of pass-to-fail transitions involve a flaky test. Red rarely means broken.</span></div>
+      <div class="cheat-item"><b>Size predicts flakiness</b><span>Small 0.5 percent, medium 1.6, large 14. Size is more predictive than tool.</span></div>
+      <div class="cheat-item"><b>The AI-specific risk</b><span>A generated browser test where a unit test would do buys flakiness by construction.</span></div>
+      <div class="cheat-item"><b>Retries are a diagnostic</b><span>They buy time. Turning them up until green is how you get a suite that means nothing.</span></div>
+      <div class="cheat-item"><b>Locator order</b><span>Role, text, label, placeholder, alt, title, test id. CSS or XPath last resort only.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>You are carrying three numbers now: how long the suite takes, how much of it lies, and how many survivors it lets through. Session 6 turns them into one gate you can put in front of a release and defend to somebody who does not like tests, and you leave owning a suite whose green you would actually bet on.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 5 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="06-the-quality-gate.html">Next: The quality gate →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

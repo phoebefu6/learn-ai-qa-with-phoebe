@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Six sessions, one test suite you can actually defend. Two suites, identical 100 percent coverage, mutation scores of 25 and 92. Run real mutation testing in your browser. Free, by Phoebe Fu.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Learn AI QA with Phoebe">
+<meta property="og:description" content="Six sessions, one test suite you can defend. Real mutation testing in your browser, no simulation.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Learn AI QA with Phoebe">
+<meta name="twitter:description" content="Identical coverage, wildly different suites. Run real mutation testing yourself.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Learn AI QA with Phoebe</title>
+<link rel="stylesheet" href="assets/style.css?v=1">
+<style>
+
+  .stats-row { display: flex; gap: 2.4rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .stat b { display: block; font-size: 2.1rem; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .72rem; opacity: .85; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; }
+
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .course-card {
+    border: 1px solid var(--hairline);
+    border-top: 4px solid var(--diff, var(--indigo));
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--ink);
+    background: #fff;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+    position: relative;
+  }
+  .course-card:hover { border-color: var(--indigo-soft); border-top-color: var(--diff, var(--indigo)); box-shadow: 0 8px 28px rgba(21,128,61,.14); transform: translateY(-3px); }
+  .course-card .cicon { font-size: 1.7rem; line-height: 1; }
+  .course-card .cnum { font-size: .72rem; font-weight: 700; color: var(--indigo); text-transform: uppercase; letter-spacing: .1em; }
+  .course-card h3 { font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+  .course-card p { font-size: .85rem; color: var(--muted); flex: 1; }
+  .course-card .meta { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+  .diff-legend { display: flex; gap: 1rem; margin-top: 1.6rem; font-size: .74rem; color: var(--muted); font-weight: 600; flex-wrap: wrap; }
+  .diff-legend i { display: inline-block; width: .85rem; height: .35rem; border-radius: 999px; margin-right: .35rem; vertical-align: middle; }
+
+  .paths { margin-top: 2.6rem; }
+  .paths h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .3rem; }
+  .paths .plede { color: var(--muted); font-size: .92rem; margin-bottom: .8rem; }
+  .path { display: flex; gap: .55rem; align-items: center; padding: .75rem 0; border-bottom: .5px solid var(--hairline); flex-wrap: wrap; }
+  .path:last-child { border-bottom: none; }
+  .path b { min-width: 15.5rem; font-size: .9rem; }
+  .path .pstep { background: var(--indigo-50); color: var(--indigo); border-radius: 999px; padding: .16rem .68rem; font-weight: 700; font-size: .8rem; text-decoration: none; transition: all .12s ease; }
+  .path .pstep:hover { background: var(--indigo); color: #fff; }
+  .path .parr { color: var(--faint); font-weight: 700; }
+
+  .mm-section { margin-top: 1.6rem; }
+  .mm-section h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .2rem; }
+  .mm-section .mm-lede { color: var(--muted); font-size: .92rem; margin-bottom: .4rem; }
+  .mm-wrap { border: 1px solid var(--hairline); border-radius: var(--radius); background: linear-gradient(180deg,#fff,#F5FAF6); padding: .6rem; overflow-x: auto; }
+  .mm-svg { width: 100%; height: auto; display: block; max-width: 60rem; margin: 0 auto; min-width: 34rem; }
+  .mm-link { cursor: pointer; text-decoration: none; }
+  .mm-node rect { transition: opacity .15s ease, filter .15s ease; }
+  .mm-node text { pointer-events: none; }
+  .mm-link:hover .mm-node rect { filter: brightness(1.06); }
+  .mm-edge { transition: opacity .15s ease; }
+
+  .hero-art { position: relative; margin: 1.8rem 0 0; border-radius: var(--radius); overflow: hidden; background: #0D1A12; }
+  .hero-art img { display: block; width: 100%; height: auto; }
+  .hero-art figcaption {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 1.1rem 1.3rem;
+    background: linear-gradient(to top, rgba(13,26,18,.94), rgba(13,26,18,0));
+    color: #fff; font-size: .84rem; line-height: 1.6;
+  }
+  .hero-art figcaption b { color: #BBF7D0; }
+  @media (max-width: 720px) { .hero-art figcaption { position: static; background: #0D1A12; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn with Phoebe · Applied AI</div>
+    <h1>Learn AI <span class="accent">QA</span> with Phoebe</h1>
+    <p class="sub">Six sessions, 45 minutes each, and one test suite you can genuinely defend. Two suites, the same code under test, both green, both at one hundred percent line coverage. One catches three of the twelve ways that code can break and the other catches eleven. Coverage cannot tell them apart, and coverage is what your dashboard shows you. This course is about the metric that can.</p>
+    <div class="stats-row">
+      <div class="stat"><b data-count="6">6</b><span>sessions</span></div>
+      <div class="stat"><b data-count="100">100</b><span>% coverage, both suites</span></div>
+      <div class="stat"><b data-count="25">25</b><span>% mutation, the weak one</span></div>
+      <div class="stat"><b data-count="92">92</b><span>% mutation, the good one</span></div>
+      <div class="stat"><b data-count="45">45</b><span>min per session</span></div>
+    </div>
+    <figure class="hero-art">
+      <img src="assets/hero.png" alt="An inspection conveyor carrying identical pale ceramic components. One of them has a fine crack across its face and has already passed under the sensor arch, whose indicator lamps are all still lit green.">
+      <figcaption><b>It already went past, and every lamp is still green.</b> That is what a passing suite proves: the tests ran. Not that anything was checked.</figcaption>
+    </figure>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>The six sessions 🧪 <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· one real test suite, built across all of them</span></h2>
+      <p class="plede">Bring a module you own. Small enough to read in a sitting, important enough that a silent bug in it would matter. By session 6 you have a suite you can defend and a gate your team can actually run.</p>
+    </div>
+
+    <div class="course-grid">
+      <a class="course-card" href="courses/01-the-green-suite-lie.html" style="--diff:#34D399">
+        <span class="cicon">🟢</span>
+        <span class="cnum">Session 1 · easy</span>
+        <h3>The green suite lie</h3>
+        <p>Two suites, identical 100 percent coverage, mutation scores of 25 and 91.7. Run both yourself in the browser, then kill the last surviving mutant by hand. Real execution, nothing scripted.</p>
+        <span class="meta"><span class="pill amber">▶ Start here</span></span>
+      </a>
+      <a class="course-card" href="courses/02-what-a-test-is-for.html" style="--diff:#34D399">
+        <span class="cicon">✔️</span>
+        <span class="cnum">Session 2 · easy</span>
+        <h3>What a test is for</h3>
+        <p>Assertions are the thing that correlates with catching bugs, and there is a paper on it. Audit your own suite for tests that execute code and check nothing, plus the change-detector tests that break on every refactor.</p>
+        <span class="meta"><span class="pill">assertions</span></span>
+      </a>
+      <a class="course-card" href="courses/03-generating-tests.html" style="--diff:#FBBF24">
+        <span class="cicon">🤖</span>
+        <span class="cnum">Session 3 · medium</span>
+        <h3>Generating tests</h3>
+        <p>Copilot, Playwright's test agents, Vitest's own guidance, and the ordering problem: tests written after faulty code detect 14 percent of faults, tests written independently detect 25.</p>
+        <span class="meta"><span class="pill">order matters</span></span>
+      </a>
+      <a class="course-card" href="courses/04-mutation-testing.html" style="--diff:#FBBF24">
+        <span class="cicon">🧬</span>
+        <span class="cnum">Session 4 · medium</span>
+        <h3>Mutation testing</h3>
+        <p>Properly this time: the operators, the tools, and the validation across 357 real faults. Plus the honest limit, because for 27 percent of those faults no mutant was coupled at all.</p>
+        <span class="meta"><span class="pill">the real metric</span></span>
+      </a>
+      <a class="course-card" href="courses/05-flakes-and-speed.html" style="--diff:#FB923C">
+        <span class="cicon">🎲</span>
+        <span class="cnum">Session 5 · hands-on</span>
+        <h3>Flakes and speed</h3>
+        <p>84 percent of pass-to-fail transitions at Google involve a flaky test. Flakiness scales with test size: small 0.5 percent, large 14. A suite nobody trusts is a suite nobody reads.</p>
+        <span class="meta"><span class="pill">trust</span></span>
+      </a>
+      <a class="course-card" href="courses/06-the-quality-gate.html" style="--diff:#FB923C">
+        <span class="cicon">🚦</span>
+        <span class="cnum">Session 6 · hands-on</span>
+        <h3>The quality gate</h3>
+        <p>Write the gate your team runs on Monday. Mutation score on the diff, not the codebase. Coverage demoted to a floor detector. And a rule for generated tests that arrive by the hundred.</p>
+        <span class="meta"><span class="pill amber">🔒 unlocks the ceiling</span></span>
+      </a>
+    </div>
+
+    <div class="diff-legend">
+      <span><i style="background:#34D399"></i>easy - everyone</span>
+      <span><i style="background:#FBBF24"></i>medium</span>
+      <span><i style="background:#FB923C"></i>hands-on</span>
+      <span><i style="background:#F87171"></i>hardest</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>Your passport 🎫</h2>
+      <p class="plede">Clear all three quiz questions in a session and it gets stamped. Stamps live in this browser only.</p>
+    </div>
+    <div class="pp-strip"></div>
+  </section>
+
+  <section class="section">
+    <div class="paths">
+      <h2>Choose your path 🗺️</h2>
+      <p class="plede">Three doors into the same conviction: green means the tests ran, and everything else is up to you.</p>
+      <div class="path"><b>🔥 I just need the argument</b>
+        <a class="pstep" href="courses/01-the-green-suite-lie.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/04-mutation-testing.html">4</a>
+        <span style="font-size:.82rem;color:var(--muted)">the demonstration, then the metric and its limits</span>
+      </div>
+      <div class="path"><b>🤖 My tests are AI-generated</b>
+        <a class="pstep" href="courses/01-the-green-suite-lie.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/03-generating-tests.html">3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/06-the-quality-gate.html">6</a>
+        <span style="font-size:.82rem;color:var(--muted)">the ordering problem, then a gate that filters what arrives</span>
+      </div>
+      <div class="path"><b>🧪 The whole journey</b>
+        <a class="pstep" href="courses/01-the-green-suite-lie.html">1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/02-what-a-test-is-for.html">2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/03-generating-tests.html">3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/04-mutation-testing.html">4</a><span class="parr">→</span>
+        <a class="pstep" href="courses/05-flakes-and-speed.html">5</a><span class="parr">→</span>
+        <a class="pstep" href="courses/06-the-quality-gate.html">6</a>
+        <span style="font-size:.82rem;color:var(--muted)">from a suite you hope is fine to one you can defend</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="paths" style="margin-top:0">
+      <h2>What is real here 🧾</h2>
+      <p class="plede">Unusually for a course with a simulator, this one has no disclaimer to make.</p>
+    </div>
+    <table class="clean">
+      <tr><th>Claim</th><th>Status</th></tr>
+      <tr><td>Coverage is not strongly correlated with test suite effectiveness</td><td>Peer-reviewed. Inozemtseva and Holmes, ICSE 2014, ACM Distinguished Paper, 31,000 suites</td></tr>
+      <tr><td>Assertions are strongly correlated with effectiveness</td><td>Peer-reviewed. Zhang and Mesbah, ESEC/FSE 2015, 6,700 suites, 24,000 assertions</td></tr>
+      <tr><td>Mutants stand in for real faults, independently of coverage</td><td>Peer-reviewed. Just et al., FSE 2014, 357 real faults. Its own limit is taught alongside it</td></tr>
+      <tr><td>The playground's coverage and mutation numbers</td><td>Real execution of your own tests in your own browser. Not a model of anything</td></tr>
+    </table>
+  </section>
+
+  <section class="section mm-section">
+    <h2>The knowledge map 🧠</h2>
+    <p class="mm-lede">The whole course at a glance - hover a session to spotlight its concepts, click any node to jump in.</p>
+    <div class="mm-wrap"><div id="mindmap"></div></div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span>Pairs with <a href="https://phoebefu6.github.io/learn-ai-coding-with-phoebe/">Learn AI Coding ↗</a> · source map: <span class="mono">materials/official-course-map.md</span></span>
+  </footer>
+
+</main>
+
+<script>
+window.MINDMAP_DATA = {
+  title: "Learn\nAI QA",
+  centerColor: "#14532D",
+  sessions: [
+    { label: "The green\nsuite lie", href: "courses/01-the-green-suite-lie.html", color: "#34D399",
+      concepts: [ { label: "Coverage vs mutation", href: "courses/01-the-green-suite-lie.html" },
+        { label: "What green proves", href: "courses/01-the-green-suite-lie.html" },
+        { label: "Kill a mutant", href: "courses/01-the-green-suite-lie.html" } ] },
+    { label: "What a test\nis for", href: "courses/02-what-a-test-is-for.html", color: "#34D399",
+      concepts: [ { label: "Assertions correlate", href: "courses/02-what-a-test-is-for.html" },
+        { label: "Assertion-free tests", href: "courses/02-what-a-test-is-for.html" },
+        { label: "Change detectors", href: "courses/02-what-a-test-is-for.html" } ] },
+    { label: "Generating\ntests", href: "courses/03-generating-tests.html", color: "#FBBF24",
+      concepts: [ { label: "The ordering problem", href: "courses/03-generating-tests.html" },
+        { label: "Playwright agents", href: "courses/03-generating-tests.html" },
+        { label: "Filter what arrives", href: "courses/03-generating-tests.html" } ] },
+    { label: "Mutation\ntesting", href: "courses/04-mutation-testing.html", color: "#FBBF24",
+      concepts: [ { label: "Operators and tools", href: "courses/04-mutation-testing.html" },
+        { label: "Validated on 357 faults", href: "courses/04-mutation-testing.html" },
+        { label: "Where it does not help", href: "courses/04-mutation-testing.html" } ] },
+    { label: "Flakes and\nspeed", href: "courses/05-flakes-and-speed.html", color: "#FB923C",
+      concepts: [ { label: "84% of red is flake", href: "courses/05-flakes-and-speed.html" },
+        { label: "Size predicts flakiness", href: "courses/05-flakes-and-speed.html" },
+        { label: "Brittle selectors", href: "courses/05-flakes-and-speed.html" } ] },
+    { label: "The quality\ngate", href: "courses/06-the-quality-gate.html", color: "#FB923C",
+      concepts: [ { label: "Gate on the diff", href: "courses/06-the-quality-gate.html" },
+        { label: "Coverage as a floor", href: "courses/06-the-quality-gate.html" },
+        { label: "Filter generated tests", href: "courses/06-the-quality-gate.html" } ] }
+  ]
+};
+</script>
+<script src="assets/mindmap.js?v=1"></script>
+<script src="assets/app.js?v=1"></script>
+</body>
+</html>

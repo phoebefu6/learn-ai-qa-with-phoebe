@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 1 of 6. Two test suites, identical 100 percent coverage, and mutation scores of 25 and 92 percent. Run both yourself in the browser. Real execution, no simulation.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="The green suite lie - learn ai qa with phoebe">
+<meta property="og:description" content="Session 1 of 6. Two suites, identical 100 percent coverage, mutation scores of 25 and 92 percent. Run both yourself.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/01-the-green-suite-lie.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The green suite lie - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 1 of 6. Identical coverage, wildly different suites. Run both yourself.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 1 · The green suite lie - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 1 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 1 of 6</div>
+    <h1>The green suite <span class="accent">lie</span></h1>
+    <p class="sub">Two test suites. The same fifteen lines of code under test. Both green, both at one hundred percent line coverage. One of them catches three of the twelve ways that code can break, and the other catches eleven. Coverage cannot tell them apart, and coverage is what your dashboard shows you. Tonight you run both suites yourself, in this page, and watch the metric that actually distinguishes them.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Start here</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Everything on this page really executes</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · What green proves, and what it does not</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: kill a mutant</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>How this course works</h2>
+    </div>
+    <p class="lede">Six sessions, 45 minutes each, and <strong>one real test suite</strong> that you build and then genuinely trust. Bring a module you own. Something small enough to read in a sitting and important enough that a silent bug in it would matter.</p>
+
+    <div class="legend">
+      <span class="pill">🎫 Clear all three quiz questions to stamp your passport</span>
+      <span class="pill">Live = presented in the 45 minutes</span>
+      <span class="pill">Self-study = the full depth, after class</span>
+    </div>
+
+    <div class="callout win">
+      <p><strong>★ What you walk out with tonight.</strong> A metric that actually distinguishes a good suite from a suite that merely runs, the peer-reviewed evidence that coverage does not, and a mutant you personally killed.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why this course is not a tour of testing tools<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>There is good official training on AI test generation. Microsoft Learn has an eight-unit module on generating unit tests with Copilot. LinkedIn Learning has an hour and seventeen minutes on AI across the testing lifecycle. Playwright has genuinely impressive test agents. This course maps against all of them honestly at the bottom of every session.</p>
+        <p>What none of them teaches is how to tell whether the tests you just generated are any good. That question has real research behind it, the answer is not coverage, and it changes how you work.</p>
+        <div class="callout example">
+          <span class="ex-pill">Real world</span>
+          <p>The most dangerous artifact in software is a test suite that is green, fast, at high coverage, and checks almost nothing. It is dangerous precisely because every dashboard you own reports it as healthy, and because it will keep reporting that right up until something ships.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers what green actually proves</span>
+      <h2>A passing suite is weaker evidence than it looks</h2>
+      <span class="tag concept">6 min live</span>
+    </div>
+    <p class="lede">Start with the humbling numbers, because they reframe everything after them. Google ran the largest published study of continuous testing on their own corpus, and the shape of the result is not what most engineers expect.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Of 5.56 million Google test targets, 91.3 percent never failed once, 2.07 percent both passed and failed, and only 1.23 percent ever caught a real developer-introduced breakage">
+        <style>
+          .q1fL { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q1fV { font: 800 12px Inter, sans-serif; fill: #fff; }
+          .q1fN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q1fL" x="240" y="88" text-anchor="end">Never failed once</text>
+        <rect x="260" y="70" width="480" height="30" rx="6" fill="#C7D6CC"/>
+        <text class="q1fV" x="272" y="90" fill="#14201A">91.3%</text>
+        <text class="q1fL" x="240" y="140" text-anchor="end">Passed and failed</text>
+        <rect x="260" y="122" width="11" height="30" rx="4" fill="#5F7268"/>
+        <text class="q1fL" x="283" y="142">2.07%</text>
+        <text class="q1fL" x="240" y="192" text-anchor="end">Of those, flaky</text>
+        <rect x="260" y="174" width="4" height="30" rx="2" fill="#C2410C"/>
+        <text class="q1fL" x="276" y="194">46,694 targets</text>
+        <text class="q1fL" x="240" y="244" text-anchor="end">Caught a real break</text>
+        <rect x="260" y="226" width="7" height="30" rx="3" fill="#15803D"/>
+        <text class="q1fL" x="279" y="246">1.23%</text>
+        <text class="q1fN" x="60" y="286">5,562,881 test targets at Google. The green bar at the bottom is the part doing the work.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - most tests never fail, and most failures are not real</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>Three numbers to carry for the rest of the course<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <ul>
+          <li><strong>91.3 percent of test targets never failed once.</strong> They ran, they passed, and they never once told anybody anything they did not already know.</li>
+          <li><strong>1.23 percent ever caught a developer-introduced breakage.</strong> After filtering out the flakes, that is the fraction of the suite doing the job the suite exists for.</li>
+          <li><strong>About 84 percent of pass-to-fail transitions involve a flaky test.</strong> When your suite goes red, the base rate says it is probably not a real regression. Google also measures a continual <strong>1.5 percent of all test runs</strong> reporting a flaky result, and almost <strong>16 percent of their tests</strong> have some level of flakiness.</li>
+        </ul>
+        <p>None of this means testing does not work. It means a green run and a red run are both weaker signals than the colour suggests, and that the interesting question is not "did it pass" but "would it have noticed."</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers coverage versus effectiveness</span>
+      <h2>Coverage asks whether a line ran, never whether you checked it</h2>
+      <span class="tag concept">7 min live</span>
+    </div>
+    <p class="lede">This is the load-bearing idea of the whole course, and unusually for this subject it is settled research rather than opinion.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Coverage asks whether a line executed while mutation testing asks whether a change to that line would be noticed">
+        <style>
+          .q1bH { font: 800 13px Inter, sans-serif; }
+          .q1bB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q1bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="40" y="50" width="390" height="180" rx="12" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q1bH" x="58" y="84" fill="#3A1503">The question coverage asks</text>
+        <text class="q1bB" x="58" y="114">"Did this line execute?"</text>
+        <text class="q1bB" x="58" y="140">A test with no assertion at all</text>
+        <text class="q1bB" x="58" y="160">still answers yes.</text>
+        <text class="q1bB" x="58" y="196" fill="#3A1503">Both suites below score 100 percent</text>
+        <rect x="450" y="50" width="390" height="180" rx="12" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q1bH" x="468" y="84" fill="#14532D">The question mutation asks</text>
+        <text class="q1bB" x="468" y="114">"If I changed this line,</text>
+        <text class="q1bB" x="468" y="134">would any test notice?"</text>
+        <text class="q1bB" x="468" y="160">Only an assertion can answer.</text>
+        <text class="q1bB" x="468" y="196" fill="#14532D">The two suites score 25 and 92</text>
+        <text class="q1bN" x="60" y="276">Same code, same coverage, same colour on the dashboard. One suite is four times better.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the second question is the one you actually care about</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>The evidence, with citations you can hand to a sceptic<span class="mini">6 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three sources, and they agree.</p>
+        <div class="prompt-box good">
+          <span class="label">★ The paper that settles it</span>
+Inozemtseva and Holmes, "Coverage Is Not Strongly Correlated with Test
+Suite Effectiveness", ICSE 2014. ACM Distinguished Paper.
+
+31,000 generated test suites across five systems of up to 724,000 lines.
+Fault detection measured with mutation testing.
+
+"there is a low to moderate correlation between coverage and
+effectiveness when the number of test cases in the suite is controlled
+for", and "stronger forms of coverage do not provide greater insight".
+
+Conclusion: coverage "should not be used as a quality target because it
+is not a good indicator of test suite effectiveness."
+        </div>
+        <p><strong>Google says the same thing in plainer language</strong>, and note the careful asymmetry, because it is why you should still measure coverage: "A high code coverage percentage does not guarantee high quality in the test coverage." But "a low code coverage number <em>does</em> guarantee that large areas of the product are going completely untested."</p>
+        <p>Their published bands are 60 percent acceptable, 75 percent commendable, 90 percent exemplary, and they warn that "the gains of increasing code coverage beyond a certain point are logarithmic".</p>
+        <p><strong>Martin Fowler on the hundred percent smell:</strong> "high coverage numbers are too easy to reach with low quality testing", and 100 percent "smells of someone writing tests to make the coverage numbers happy, but not thinking about what they are doing." He quotes Brian Marick, and this is the line to remember: "I expect a high level of coverage. Sometimes managers require one. There's a subtle difference."</p>
+        <div class="callout tip">
+          <p><strong>What to do with coverage, then.</strong> Keep it as a floor detector, not a quality target. Low coverage genuinely tells you something is untested. High coverage tells you nothing at all about whether it is checked.</p>
+        </div>
+      </div>
+    </details>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A gauge showing the weak suite scoring 25 percent on mutation testing while sitting at full line coverage, against the 91.7 percent the same coverage was hiding">
+        <style>
+          .q1gL { font: 700 11px Inter, sans-serif; fill: #5F7268; letter-spacing: .06em; }
+          .q1gV { font: 800 20px Inter, sans-serif; fill: #fff; }
+          .q1gT { font: 700 12px Inter, sans-serif; fill: #14532D; }
+          .q1gN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q1gL" x="120" y="66">WHAT THE WEAK SUITE ACTUALLY CATCHES</text>
+        <rect x="120" y="97" width="640" height="26" rx="13" fill="#E1EBE4"/>
+        <rect x="120" y="97" width="160" height="26" rx="13" fill="#991B1B"/>
+        <text class="q1gV" x="136" y="116">25%</text>
+        <line x1="707" y1="79" x2="707" y2="141" stroke="#C2410C" stroke-width="2.5"/>
+        <text class="q1gT" x="707" y="71" text-anchor="middle">91.7% reachable</text>
+        <text class="q1gN" x="120" y="164">Both suites report one hundred percent line coverage. This is the gap that hides behind it.</text>
+        <text class="q1gN" x="120" y="196">The bar is a real measurement, run in your browser further down this page.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - full coverage, and three quarters of the ways this code can break go unnoticed</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>What does correlate: assertions<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The companion finding, and it points the other way. Zhang and Mesbah, ESEC/FSE 2015, built 6,700 test suites from 24,000 assertions across five real Java projects and found that "the number of assertions in a test suite strongly correlates with its effectiveness", and that "assertion coverage is strongly correlated with effectiveness".</p>
+        <p>Their premise line is the one sentence that explains the entire course: <strong>"coverage without checking for correctness is meaningless."</strong></p>
+        <p>Google's own mutation-testing paper puts the mechanism precisely: coverage "might be misleading, in particular when program statements are covered but the expected program outcome is not asserted upon." That sentence describes exactly what you are about to watch happen.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DEMO ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Run both suites, then kill a mutant</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">The playground below is not a simulation. Your tests are compiled and executed in this page, the coverage is counted from lines that actually ran, and the mutants are real edits to the source, recompiled and re-run against whatever you write. Every number is a real result.</p>
+
+    <div id="qa-live"></div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Start on the weak suite and run it.</strong> One test, one assertion, green. This is close to what a generator hands you when you ask for a test and accept the first answer.</p></div>
+      <div class="step"><p><strong>Switch to the coverage tab.</strong> One hundred percent. Every line of the function is green. On most dashboards this module is now considered done.</p></div>
+      <div class="step"><p><strong>Switch to the mutation tab.</strong> Twenty-five percent. Nine of the twelve real changes to that code went completely unnoticed by your suite. Read the survivor list, because each row is a bug that could ship today with the suite still green.</p></div>
+      <div class="step"><p><strong>Now load the strong suite and repeat all three tabs.</strong> Same code. Same one hundred percent coverage. Mutation score 91.7. Nothing on a coverage dashboard would ever have distinguished these two.</p></div>
+      <div class="step"><p><strong>Find the one survivor.</strong> The strong suite still misses a mutant: <span class="mono">memberSince &lt; 2020</span> becomes <span class="mono">&lt;= 2020</span>. The suite tests 2019 and it tests 2021. It never tests exactly 2020, and the boundary is where bugs live.</p></div>
+      <div class="step"><p><strong>Kill it yourself.</strong> Add this line to the editor and run the mutation tab again. It passes against the real code and fails against the mutant, which is precisely what a good test does.</p></div>
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ The test that kills the last mutant</span>
+test("member joined exactly in 2020", function () {
+  eq(price([{price: 60, qty: 2}], 2020), 108);
+});
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Watch it go to one hundred percent, zero survivors.</strong> You just did, by hand, what a coverage number could never have told you to do.</p></div>
+      <div class="step"><p><strong>Now break something on purpose.</strong> Change an expected value to a wrong number and run it. The failure message is real. This playground has no way to fake a pass.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <p><strong>The honest limit, said now rather than later.</strong> Mutation testing is a better proxy than coverage. It is still a proxy. In the paper that validated it, for 95 of 357 real faults, roughly 27 percent, no mutant was coupled to the real fault at all. Session 4 covers where it does and does not help.</p>
+    </div>
+
+    <div class="stakes" data-base="0" data-unit="mutants killed" data-title="Which of these does your real suite actually do" data-foot="Tick what is true of the suite you brought. This is the honest version of a coverage report.">
+      <label><input type="checkbox" data-delta="3"> Every test asserts on a value, not just that nothing threw</label>
+      <label><input type="checkbox" data-delta="3"> Boundaries are tested at the boundary, not near it</label>
+      <label><input type="checkbox" data-delta="2"> Error paths are asserted, not just executed</label>
+      <label><input type="checkbox" data-delta="2"> The tests were written from the spec, not from the finished code</label>
+      <label><input type="checkbox" data-delta="-4" data-trap="1"> You have a coverage gate in CI and treat passing it as done</label>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 2</h2>
+      <span class="tag exercise">25 min</span>
+    </div>
+    <ol>
+      <li><strong>Pick the module.</strong> Something you own, small enough to read in one sitting, important enough that a silent bug would matter. That module is the artifact for all six sessions.</li>
+      <li><strong>Write down its current coverage.</strong> Whatever your tooling says. You will want the number later, mostly to stop caring about it.</li>
+      <li><strong>Run a mutation tool on it once.</strong> Stryker for JavaScript or TypeScript, PIT for the JVM, mutmut for Python. Do not tune anything. Just look at the first survivor list and read three entries.</li>
+      <li><strong>Find one real survivor and write the test that kills it.</strong> One. That single test is worth more than the next ten percent of coverage.</li>
+      <li><strong>Count your assertion-free tests.</strong> Search your suite for tests that call something and never assert on the result. Write down how many. Session 2 is about that number.</li>
+    </ol>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 1 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · Two suites both hit 100 percent line coverage on the same function. What does that tell you about their relative quality?</p>
+      <button class="qopt" type="button">A · They are equally good, since coverage measures how much is tested</button>
+      <button class="qopt" type="button">B · Nothing. Coverage asks whether a line ran, not whether anything checked what it did</button>
+      <button class="qopt" type="button">C · The one with fewer tests is better, because it is more efficient</button>
+      <p class="qwhy">You watched it live: 100 percent on both, mutation scores of 25 and 91.7. Inozemtseva and Holmes found only a low to moderate correlation between coverage and effectiveness once suite size is controlled for.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · A mutant survives your test suite. What does that mean?</p>
+      <button class="qopt" type="button">A · The mutation tool made an invalid change and it should be ignored</button>
+      <button class="qopt" type="button">B · Your code has a bug that the mutant revealed</button>
+      <button class="qopt" type="button">C · Someone could make that exact change to your code and every test would still pass</button>
+      <p class="qwhy">A survivor is a real edit to the source that nothing noticed. It is not a bug in your code, it is a hole in your tests, and it is the most actionable signal in this course.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Google publishes coverage guidelines of 60, 75 and 90 percent. Why do they not recommend chasing 100?</p>
+      <button class="qopt" type="button">A · Gains beyond a point are logarithmic, and the extra tests tend to be low value</button>
+      <button class="qopt" type="button">B · Because 100 percent coverage is technically impossible to reach</button>
+      <button class="qopt" type="button">C · Because their codebase is too large to measure accurately</button>
+      <p class="qwhy">Their words: "The gains of increasing code coverage beyond a certain point are logarithmic." Fowler puts it more bluntly: 100 percent "smells of someone writing tests to make the coverage numbers happy."</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Inozemtseva and Holmes, ICSE 2014</span><span class="note">31,000 suites, five systems, up to 724k lines. Taught in full including the conclusion that coverage should not be used as a quality target</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Zhang and Mesbah, ESEC/FSE 2015</span><span class="note">6,700 suites, 24,000 assertions. The counterweight finding: assertions do correlate with effectiveness</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google on coverage and on flakiness</span><span class="note">The 60/75/90 bands, the logarithmic-gains warning, the high-versus-low asymmetry, plus 1.5 percent flaky runs and 84 percent of pass-to-fail transitions</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Memon et al., ICSE-SEIP 2017</span><span class="note">5,562,881 test targets. The 91.3 / 2.07 / 1.23 percent funnel taught as the opening frame</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Mutation testing as a practice</span><span class="note">Introduced and made hands-on here. Sessions 4 covers the operators, the tools and the honest limits properly</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 1 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The two questions</b><span>Coverage: did this line run? Mutation: if I changed it, would anything notice? Only the second one matters.</span></div>
+      <div class="cheat-item"><b>The demonstration</b><span>Same code, both 100 percent coverage, mutation 25 vs 91.7. Coverage cannot tell them apart.</span></div>
+      <div class="cheat-item"><b>Coverage is a floor detector</b><span>Low coverage really does mean untested. High coverage means nothing about whether it is checked.</span></div>
+      <div class="cheat-item"><b>Assertions are the signal</b><span>Zhang and Mesbah: assertion count strongly correlates with effectiveness. Coverage does not.</span></div>
+      <div class="cheat-item"><b>Green is weak evidence</b><span>91.3 percent of Google test targets never failed once. Only 1.23 percent ever caught a real break.</span></div>
+      <div class="cheat-item"><b>Boundaries, not near-boundaries</b><span>The last surviving mutant was &lt; becoming &lt;=. The suite tested 2019 and 2021, never 2020.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>You just watched a suite of one assertion pass everything and catch nothing. Session 2 asks the question underneath it: what is a test actually for? You will go through your own suite counting the tests that execute code and assert nothing, and the number is usually worse than people expect.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 1 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="02-what-a-test-is-for.html">Next: What a test is for →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+<script src="../assets/runner.js?v=1"></script>
+<script src="../assets/qa-live.js?v=1"></script>
+</body>
+</html>

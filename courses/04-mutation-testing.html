@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- social:start -->
+<meta name="description" content="Session 4 of 6. Mutation testing taught properly: the operators, the 357-fault validation study, the 27 percent it cannot reach, and how Google cut a changelist from 820 mutants to 7.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Learn with Phoebe">
+<meta property="og:title" content="Mutation testing - learn ai qa with phoebe">
+<meta property="og:description" content="Session 4 of 6. How mutants work, the evidence that they stand in for real faults, the limit nobody mentions, and how to run it on a diff without drowning.">
+<meta property="og:url" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/courses/04-mutation-testing.html">
+<meta property="og:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mutation testing - learn ai qa with phoebe">
+<meta name="twitter:description" content="Session 4 of 6. A survivor is not a bug in your code. It is a hole in your tests.">
+<meta name="twitter:image" content="https://phoebefu6.github.io/learn-ai-qa-with-phoebe/assets/og-cover.png">
+<!-- social:end -->
+<title>Session 4 · Mutation testing - learn ai qa with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-qa-with-phoebe</a> / Session 4 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI QA with Phoebe · Session 4 of 6</div>
+    <h1>Mutation testing, done <span class="accent">properly</span></h1>
+    <p class="sub">In session 1 you killed a mutant with your hands and took a score from 91.7 to 100. You did not learn what a mutant is, where the idea comes from, what the research actually proved, or why the naive version of this tool is unusable on a real codebase. Tonight is all four, including the part most write-ups leave out: the twenty-seven percent of real faults that mutation testing cannot reach.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Medium</span>
+      <span class="chip audience">QA engineers · developers who own their own tests · tech leads</span>
+      <span class="chip audience">Bring the module you have been using since session 1</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Recap</span>
+      <span class="a2" style="flex:4">3-16 · Operators, evidence, and the limit</span>
+      <span class="a3" style="flex:5">16-38 · Build-along: triage your survivors</span>
+      <span class="a4" style="flex:1">38-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="part-1">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · covers how mutation testing works</span>
+      <h2>The tool breaks your code on purpose and asks who noticed</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">A mutation tool takes your source, applies one small syntactic edit, recompiles, and re-runs your suite against the changed version. Each edited copy is a <strong>mutant</strong>. The edits are not random noise. They are drawn from a fixed catalogue of operators, and every one of them is a change a tired human being could plausibly have written.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five families of mutation operator, each showing an original line of code and the single edit the tool makes to it">
+        <style>
+          .q4aL { font: 700 12px Inter, sans-serif; fill: #14201A; }
+          .q4aC { font: 400 12px ui-monospace, Menlo, monospace; fill: #14532D; }
+          .q4aN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+          .q4aT { font: 700 13px Inter, sans-serif; fill: #14532D; }
+        </style>
+        <text class="q4aT" x="40" y="34">One edit at a time, from a fixed catalogue</text>
+        <text class="q4aL" x="285" y="72" text-anchor="end">Boundary change</text>
+        <rect x="300" y="54" width="540" height="30" rx="6" fill="#F0FDF4" stroke="#C7D6CC" stroke-width="1"/>
+        <text class="q4aC" x="314" y="74">if (qty &lt; 10)   becomes   if (qty &lt;= 10)</text>
+        <text class="q4aL" x="285" y="114" text-anchor="end">Negated condition</text>
+        <rect x="300" y="96" width="540" height="30" rx="6" fill="#F0FDF4" stroke="#C7D6CC" stroke-width="1"/>
+        <text class="q4aC" x="314" y="116">if (isMember)   becomes   if (!isMember)</text>
+        <text class="q4aL" x="285" y="156" text-anchor="end">Arithmetic swap</text>
+        <rect x="300" y="138" width="540" height="30" rx="6" fill="#F0FDF4" stroke="#C7D6CC" stroke-width="1"/>
+        <text class="q4aC" x="314" y="158">total * rate   becomes   total / rate</text>
+        <text class="q4aL" x="285" y="198" text-anchor="end">Literal change</text>
+        <rect x="300" y="180" width="540" height="30" rx="6" fill="#F0FDF4" stroke="#C7D6CC" stroke-width="1"/>
+        <text class="q4aC" x="314" y="200">discount = 0.1   becomes   discount = 0</text>
+        <text class="q4aL" x="285" y="240" text-anchor="end">Statement deletion</text>
+        <rect x="300" y="222" width="540" height="30" rx="6" fill="#FEF0E7" stroke="#C2410C" stroke-width="1"/>
+        <text class="q4aC" x="314" y="242" fill="#3A1503">cart.clear();   becomes   the line is removed</text>
+        <text class="q4aN" x="40" y="286">Suite fails on the mutant, it is killed. Suite still passes, it survived.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - every operator is a mistake a human could have made</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Killed, survived, and the one sentence that matters<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The bookkeeping is simple enough to explain to a sceptical manager in thirty seconds. <strong>Killed:</strong> at least one test failed when the mutant was in place, so your suite noticed the change. <strong>Survived:</strong> the mutant was compiled, the whole suite ran, and every test still passed. <strong>Mutation score:</strong> killed divided by total mutants generated, a percentage that looks exactly like coverage, which is exactly why people misuse it like coverage.</p>
+        <div class="callout tip">
+          <p><strong>Say this out loud every time you teach it.</strong> A survivor is <em>not</em> a bug in your code. Your code is fine. A survivor is a hole in your tests: proof that somebody could make that precise edit to that precise line, ship it, and every gate you own would stay green.</p>
+        </div>
+        <p>That reframing is the whole reason mutation testing beats coverage as a working metric. Coverage hands you a number about lines. A survivor list hands you a stack of concrete, addressable, reproducible statements of the form "this change would go unnoticed". You can act on the second one this afternoon.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Why the score itself is the least useful part of the output<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Two teams both report a mutation score of 71 percent. One has thirty survivors clustered in a payment calculation. The other has thirty survivors spread evenly across logging, string formatting and defensive branches nothing depends on. The number is identical and the situations are not remotely comparable. This is the same trap coverage sets, one level up. Treat the score as a direction of travel and the <strong>survivor list as the artefact</strong>. When a team asks what score to aim for, the honest answer is that the question is already off track: read the survivors on the code you changed this week and decide, one by one, whether you would ship that edit.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="part-2">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · covers the validation study</span>
+      <h2>The evidence that mutants stand in for real faults</h2>
+      <span class="tag concept">4 min live</span>
+    </div>
+    <p class="lede">The obvious objection is the right one to raise first. Killing an artificial edit is not the same as catching a real bug, so why should anyone care? Because somebody went and measured it against real faults, on real applications, and published the result.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Of 357 real faults studied, 73 percent were coupled to mutants from common operators, 95 faults had no additional mutants detected, and 63 of those had no obvious operator at all">
+        <style>
+          .q4bL { font: 600 12px Inter, sans-serif; fill: #14201A; }
+          .q4bV { font: 800 13px Inter, sans-serif; fill: #fff; }
+          .q4bN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+          .q4bT { font: 700 13px Inter, sans-serif; fill: #14532D; }
+        </style>
+        <text class="q4bT" x="40" y="34">Just et al., FSE 2014 · 357 real faults · five applications · 321,000 lines</text>
+        <text class="q4bL" x="325" y="104" text-anchor="end">Coupled to mutants</text>
+        <rect x="340" y="80" width="350" height="36" rx="6" fill="#15803D"/>
+        <text class="q4bV" x="356" y="104">73% of real faults</text>
+        <text class="q4bL" x="325" y="164" text-anchor="end">No extra mutants found</text>
+        <rect x="340" y="140" width="130" height="36" rx="6" fill="#C2410C"/>
+        <text class="q4bV" x="356" y="164">27%</text>
+        <text class="q4bL" x="484" y="164">95 of 357 faults</text>
+        <text class="q4bL" x="325" y="224" text-anchor="end">No operator could reach</text>
+        <rect x="340" y="200" width="85" height="36" rx="6" fill="#991B1B"/>
+        <text class="q4bV" x="356" y="224">63</text>
+        <text class="q4bL" x="439" y="224">of those 95 faults</text>
+        <text class="q4bN" x="40" y="286">Statistically significant correlation with real fault detection, independently of coverage.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the green bar is the case for mutation testing, the red bars are its ceiling</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The paper, and the clause that does the work<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>This is the strongest empirical result in the whole course, and it is worth quoting precisely rather than paraphrasing, because the last four words are the ones a sceptic will try to take away from you.</p>
+        <div class="prompt-box good">
+          <span class="label">★ The validation study</span>
+Just, Jalali, Inozemtseva, Ernst, Holmes and Fraser,
+"Are Mutants a Valid Substitute for Real Faults in Software Testing?",
+FSE 2014.
+
+357 real faults across five applications, totalling 321,000 lines.
+
+"The results show a statistically significant correlation between
+mutant detection and real fault detection, independently of code
+coverage."
+
+73 percent of real faults were coupled to mutants generated by
+common operators.
+        </div>
+        <p><strong>"Independently of code coverage" is the load-bearing phrase.</strong> It is not saying that suites which kill more mutants also happen to be bigger, and bigger suites cover more, and that is why they catch more bugs. The correlation survives once coverage is accounted for. Mutation detection is carrying information that coverage does not have.</p>
+        <p>Put next to session 1's finding, the pair is unusually clean for software research. Inozemtseva and Holmes: coverage has only a low to moderate correlation with effectiveness once suite size is controlled for. Just et al.: mutant detection correlates with real fault detection independently of coverage. Same research community, same era, opposite verdicts on the two metrics.</p>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>How to answer "these are fake bugs" in a review<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>You will hear it, usually from the most experienced person in the room, and it is a fair instinct. The answer has three moves and none of them require you to overclaim. <strong>Concede the premise:</strong> yes, a mutant is a fabricated edit, and nobody is arguing it is a real defect. <strong>Point at the coupling result:</strong> somebody checked whether killing the fabricated ones predicts catching the real ones, on 357 genuine faults, and it does, independently of coverage. <strong>Then concede the ceiling before they find it:</strong> 27 percent of those real faults were not reachable this way at all. Part 3 is that number, and offering it yourself is what makes the first two moves credible.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="part-3">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · covers the honest limit</span>
+      <h2>The twenty-seven percent that mutation testing cannot reach</h2>
+      <span class="tag concept">4 min live</span>
+    </div>
+    <p class="lede">Teach this in the same breath as the validation, not in a footnote three weeks later. The moment a metric gets sold as complete is the moment it starts doing the same damage coverage did, and this course does not have the standing to make that mistake twice.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two overlapping circles: real faults and faults reachable by mutation operators, with 73 percent in the overlap and 27 percent outside it">
+        <style>
+          .q4cH { font: 700 13px Inter, sans-serif; }
+          .q4cB { font: 700 15px Inter, sans-serif; fill: #14201A; }
+          .q4cS { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q4cN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <text class="q4cH" x="255" y="38" text-anchor="middle" fill="#3A1503">Real faults in real code</text>
+        <text class="q4cH" x="625" y="38" text-anchor="middle" fill="#14532D">What operators can express</text>
+        <circle cx="360" cy="155" r="100" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <circle cx="520" cy="155" r="100" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5" fill-opacity="0.85"/>
+        <text class="q4cB" x="300" y="150" text-anchor="middle" fill="#3A1503">27%</text>
+        <text class="q4cS" x="300" y="172" text-anchor="middle">unreachable</text>
+        <text class="q4cB" x="440" y="150" text-anchor="middle" fill="#14532D">73%</text>
+        <text class="q4cS" x="440" y="172" text-anchor="middle">both</text>
+        <text class="q4cS" x="590" y="150" text-anchor="middle" fill="#14532D">edits no</text>
+        <text class="q4cS" x="590" y="172" text-anchor="middle" fill="#14532D">human writes</text>
+        <text class="q4cN" x="40" y="286">For 63 of the 95 unreached faults, no obvious operator could generate a coupled mutant.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a better proxy than coverage is still a proxy</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>What lives in the unreachable 27 percent<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The same paper that validated the technique also bounded it, and the sentence is unambiguous.</p>
+        <div class="prompt-box bad">
+          <span class="label">✗ The number the vendor slide never shows</span>
+"for 95 out of 357 real faults (27%), none of the triggering tests
+detected any additional mutants."
+
+And for 63 of those 95, no obvious mutation operator could generate
+a coupled mutant at all.
+        </div>
+        <p>Read that second part carefully. It is not saying the tool was configured badly or that a richer operator set would have caught them. For 63 real faults, there was no obvious single-token edit that stands in for what actually went wrong. Whole categories of defect are shaped that way: a missing feature, an entire branch that was never written, a specification misunderstood at design time, a wrong algorithm implemented flawlessly.</p>
+        <div class="callout tip">
+          <p><strong>The sentence to carry.</strong> Mutation testing is a better proxy than coverage. It is still a proxy. A mutation score of 100 percent means every edit your tool knows how to express would be noticed. It does not mean your software is correct, and it never claimed to.</p>
+        </div>
+        <p>Which is why this course keeps insisting on the thing underneath both metrics: tests written from the specification, asserting on behaviour a human agreed was correct. No automated proxy substitutes for having decided what the code is supposed to do.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section class="section" id="part-4">
+    <div class="section-kicker">
+      <span class="klabel">Part 4 · covers making it usable</span>
+      <h2>Run it on the diff, and suppress without mercy</h2>
+      <span class="tag concept">5 min live</span>
+    </div>
+    <p class="lede">Everything so far argues that you should do this. Part 4 is why almost nobody does, and what the largest deployment on record had to change before their own engineers would tolerate it.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before and after Google's suppression heuristics: a median of 820 mutants per changelist at 15 percent productive, versus a median of 7 at 89 percent productive">
+        <style>
+          .q4dH { font: 800 13px Inter, sans-serif; }
+          .q4dB { font: 400 12px Inter, sans-serif; fill: #14201A; }
+          .q4dK { font: 800 22px Inter, sans-serif; }
+          .q4dN { font: 400 12px Inter, sans-serif; fill: #5F7268; }
+        </style>
+        <rect x="40" y="46" width="390" height="188" rx="12" fill="#FEF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="q4dH" x="58" y="76" fill="#3A1503">Every mutant, whole codebase</text>
+        <text class="q4dK" x="58" y="118" fill="#C2410C">820 mutants</text>
+        <text class="q4dB" x="58" y="144">Median, on a single changelist.</text>
+        <text class="q4dB" x="58" y="172" fill="#3A1503">Developers rated 85 percent of them</text>
+        <text class="q4dB" x="58" y="192" fill="#3A1503">unproductive. Productive ratio: 15%.</text>
+        <text class="q4dB" x="58" y="218">Nobody reads 820 of anything.</text>
+        <rect x="450" y="46" width="390" height="188" rx="12" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+        <text class="q4dH" x="468" y="76" fill="#14532D">Diff only, heuristics on</text>
+        <text class="q4dK" x="468" y="118" fill="#15803D">7 mutants</text>
+        <text class="q4dB" x="468" y="144">Median, on a single changelist.</text>
+        <text class="q4dB" x="468" y="172" fill="#14532D">Six years of feedback from over</text>
+        <text class="q4dB" x="468" y="192" fill="#14532D">20,000 developers. Ratio: 89%.</text>
+        <text class="q4dB" x="468" y="218">Seven is a thing a human reads.</text>
+        <text class="q4dN" x="40" y="276">Two billion lines, 500,000,000 tests daily, 16,935,148 mutants, 24,000+ developers.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the technique did not change, the delivery did</figcaption>
+    </figure>
+
+    <details class="card">
+      <summary><span class="mode live">Live</span>The scale, and the number that saved the programme<span class="mini">5 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Google published their production mutation-testing system, and the honest part of the paper is the failure that came first.</p>
+        <ul>
+          <li><strong>Two billion lines of code</strong> and around <strong>500,000,000 tests run daily</strong>. This is the largest continuous testing environment anyone has written up.</li>
+          <li><strong>16,935,148 generated mutants</strong>, with the system deployed to <strong>more than 24,000 developers</strong>.</li>
+          <li>And the sentence that nearly ended it: developers initially rated <strong>85 percent of mutants unproductive</strong>. Only fifteen in a hundred were worth a human glance.</li>
+        </ul>
+        <p>The fix was not a better algorithm. It was suppression heuristics, built from six years of feedback from over 20,000 developers, that refuse to surface mutants in places where a surviving mutant almost never means anything: logging, unreachable defensive code, statements whose alteration cannot change observable behaviour. That moved the productive ratio <strong>from 15 percent to 89 percent</strong>, and cut a changelist from a median of <strong>820 mutants to 7</strong>. In production, 82 percent of surfaced mutants that received feedback were labelled productive.</p>
+        <div class="callout win">
+          <p><strong>★ The transferable lesson, and it is the whole of Part 4.</strong> Run mutation testing <strong>on the diff, not on the codebase</strong>, and suppress aggressively. A tool that shows a developer seven relevant mutants at review time gets used. The same tool showing 820 gets switched off in a fortnight and never turned back on.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="mode self">Self-study</span>Change-detector tests, and why the same paper names them<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Chasing a mutation score without judgement pushes you straight into a failure mode Google names in that paper: tests whose "change-detector nature (specifically testing the current implementation rather than the specification) violates testing best practices and causes brittle tests and false alarms."</p>
+        <p>The mechanism is easy to fall into. A mutant survives, you want it dead, so you write a test asserting whatever the current implementation happens to do at that line. The mutant dies, the score goes up, and you have added a test that fails on every legitimate refactor and catches nothing. You have converted a hole in your tests into a tax on future changes.</p>
+        <p>The discipline is the one from session 2. Kill a survivor by asserting on <strong>behaviour someone specified</strong>. If you cannot state what the correct behaviour at that line is without reading the implementation, that survivor belongs in the suppression list, not in a new test.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 5 ============ -->
+  <section class="section" id="part-5">
+    <div class="section-kicker">
+      <span class="klabel">Part 5 · covers the tools</span>
+      <h2>What to install, in one minute</h2>
+      <span class="tag concept">2 min live</span>
+    </div>
+    <p class="lede">Short section, because the tooling is genuinely not the hard part. Pick the one for your runtime, point it at a diff, and read the survivors.</p>
+
+    <table class="clean">
+      <thead>
+        <tr><th>Tool</th><th>Runtimes</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="mono">Stryker</span></td><td>JavaScript and TypeScript, C#, Scala</td><td>The default for a front-end or Node codebase, and the one used by most teams doing this at all</td></tr>
+        <tr><td><span class="mono">PIT</span></td><td>The JVM</td><td>The long-standing JVM option, and the one the research community reaches for</td></tr>
+        <tr><td><span class="mono">mutmut</span></td><td>Python</td><td>The straightforward Python choice</td></tr>
+        <tr><td><span class="mono">cosmic-ray</span></td><td>Python</td><td>Its documentation carries a 2019 copyright and shows no current version. Verify maintenance yourself before you depend on it</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <p><strong>How to say that last row in a review.</strong> Not "cosmic-ray is dead", which you do not know. Say what you checked: the docs carry a 2019 copyright and no current version, so confirm the maintenance status before adding it to a build. That is the difference between due diligence and gossip, and it is the same habit this course applies to research claims.</p>
+    </div>
+  </section>
+
+  <!-- ============ BUILD-ALONG ============ -->
+  <section class="section" id="demo-4">
+    <div class="section-kicker">
+      <span class="klabel">Build-along</span>
+      <h2>Run it on your diff and kill three real survivors</h2>
+      <span class="tag demo">★ 22 min · everyone builds</span>
+    </div>
+    <p class="lede">Not on your codebase. On the diff of whatever you changed most recently in the module you have carried since session 1. If you have no recent change, make a small one first. The point of tonight is to feel what this tool is like when it is scoped the way Google had to scope it.</p>
+
+    <div class="tick" data-stages="Run on diff|Triage|Kill|Suppress" data-title="The loop, four moves, every review">
+      <p class="tick-note" data-stage="0"><b>Run on diff.</b> Point Stryker, PIT or mutmut at the changed files only. Whole-codebase runs are how this tool gets abandoned.</p>
+      <p class="tick-note" data-stage="1"><b>Triage.</b> Go down the survivor list once and sort each into two piles: a hole a human would care about, or noise. Do not fix anything yet.</p>
+      <p class="tick-note" data-stage="2"><b>Kill.</b> Take three from the first pile and write the test the specification implies. Assert on behaviour, never on the current implementation.</p>
+      <p class="tick-note" data-stage="3"><b>Suppress.</b> Everything in the second pile goes into the config with a one-line reason. An unsuppressed noise mutant reappears every single run.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Scope it to the diff.</strong> Stryker has incremental and since-commit modes, PIT has scmMutationCoverage, mutmut takes explicit paths. Whatever your tool calls it, find that flag before you run anything, not after.</p></div>
+      <div class="step"><p><strong>Run it once and time it.</strong> Write the wall-clock number down. If it is longer than your coffee, this will never live in your review loop and you need a narrower scope, not more patience.</p></div>
+      <div class="step"><p><strong>Read the survivor list top to bottom without fixing anything.</strong> This is the discipline most people skip. You are triaging, and triage stops working the moment you start treating.</p></div>
+      <div class="step"><p><strong>Sort every survivor into real hole or unproductive.</strong> The test is one question: would you sign off a pull request that made exactly this edit? Yes means unproductive. No, or "wait, what" means real.</p></div>
+      <div class="step"><p><strong>Kill three real ones.</strong> Boundary survivors are the best starting material because the fix is unambiguous: test the boundary value itself, not the values either side of it.</p></div>
+      <div class="step"><p><strong>Suppress the rest, with a reason each.</strong> A suppression with no reason is indistinguishable from a suppression that was wrong, and in six months you will not be able to tell them apart.</p></div>
+    </div>
+
+    <div class="prompt-box good">
+      <span class="label">★ The shape of a test that kills a boundary survivor</span>
+// Survivor: line 14, ConditionalBoundary, qty &lt; 10 became qty &lt;= 10
+// The suite tests qty of 9 and qty of 11. It never tests exactly 10.
+
+test("quantity of exactly 10 does not get the bulk rate", function () {
+  eq(price([{price: 20, qty: 10}]), 200);
+});
+
+// Passes on the real code. Fails on the mutant. That is the definition
+// of a test worth having, and the reason to write this one rather than
+// asserting on whatever the function returns today.
+    </div>
+
+    <div class="hotspot" data-title="A survivor report, and what to read first">
+      <div class="hs-mock">
+        <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A mock mutation testing report showing a score line and five mutant rows, three of which survived and one of which had no coverage">
+          <style>
+            .q4hH { font: 700 13px Inter, sans-serif; fill: #fff; }
+            .q4hS { font: 700 13px Inter, sans-serif; fill: #14201A; }
+            .q4hR { font: 400 12px ui-monospace, Menlo, monospace; fill: #14201A; }
+            .q4hB { font: 700 12px ui-monospace, Menlo, monospace; }
+          </style>
+          <rect x="20" y="20" width="840" height="340" rx="12" fill="#fff" stroke="#C7D6CC" stroke-width="1.5"/>
+          <rect x="20" y="20" width="840" height="46" rx="12" fill="#14532D"/>
+          <rect x="20" y="54" width="840" height="12" fill="#14532D"/>
+          <text class="q4hH" x="44" y="49">mutation report · src/pricing.js · scope: diff of the last commit</text>
+          <rect x="40" y="86" width="800" height="40" rx="8" fill="#E1EBE4"/>
+          <text class="q4hS" x="60" y="112">Mutation score 62.5%    killed 8    survived 5    no coverage 1</text>
+          <rect x="40" y="142" width="800" height="36" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/>
+          <text class="q4hB" x="60" y="165" fill="#991B1B">SURVIVED</text>
+          <text class="q4hR" x="150" y="165">line 14   ConditionalBoundary    qty &lt;  became  qty &lt;=</text>
+          <rect x="40" y="188" width="800" height="36" rx="6" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1"/>
+          <text class="q4hB" x="60" y="211" fill="#15803D">KILLED</text>
+          <text class="q4hR" x="150" y="211">line 18   ArithmeticOperator    total *  became  total /</text>
+          <rect x="40" y="234" width="800" height="36" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/>
+          <text class="q4hB" x="60" y="257" fill="#991B1B">SURVIVED</text>
+          <text class="q4hR" x="150" y="257">line 22   BlockRemoval          the early return was deleted</text>
+          <rect x="40" y="280" width="800" height="36" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/>
+          <text class="q4hB" x="60" y="303" fill="#991B1B">SURVIVED</text>
+          <text class="q4hR" x="150" y="303">line 27   StringLiteral         a debug log message changed</text>
+          <rect x="40" y="326" width="800" height="36" rx="6" fill="#FEF0E7" stroke="#C2410C" stroke-width="1"/>
+          <text class="q4hB" x="60" y="349" fill="#3A1503">NO COVER</text>
+          <text class="q4hR" x="150" y="349">line 31   NegateConditional     the mutant never ran at all</text>
+        </svg>
+      </div>
+      <button class="hs-pin" style="--x:34%;--y:28%" data-title="The score line"
+              data-cap="Read this second, not first. 62.5 percent is a direction of travel, not a verdict."></button>
+      <button class="hs-pin" style="--x:24%;--y:42%" data-title="A real hole"
+              data-cap="A boundary that nothing sits on. Would you approve this edit? No. Kill it today."></button>
+      <button class="hs-pin" style="--x:64%;--y:79%" data-title="An unproductive one"
+              data-cap="A debug log string. Nothing should assert on it. Suppress with a reason, do not test it."></button>
+      <button class="hs-pin" style="--x:30%;--y:91%" data-title="Not a mutation problem"
+              data-cap="No coverage means the mutant never executed. That is a missing test, found a cheaper way."></button>
+    </div>
+
+    <div class="stakes" data-base="180" data-unit="min per shipped survivor" data-lower-is-better="1"
+         data-title="What one survivor costs once it ships" data-foot="Tick what is already true tonight. The trap is the one most teams reach for first.">
+      <label><input type="checkbox" data-delta="-45"> Survivors get read on every diff, not once a quarter</label>
+      <label><input type="checkbox" data-delta="-40"> Boundary survivors get a test on the boundary value itself</label>
+      <label><input type="checkbox" data-delta="-35"> Deleted-statement survivors get an assertion on the effect</label>
+      <label><input type="checkbox" data-delta="-25"> Every suppression carries a one-line reason, so real holes stay visible</label>
+      <label><input type="checkbox" data-delta="60" data-trap="1"> You raise the score threshold in CI instead of reading the survivors</label>
+    </div>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>The most common way this fails on a real team is not disagreement about the evidence. It is that somebody runs it on the whole repository, gets four hundred survivors, feels the whole thing is hopeless, and quietly removes it from the build two sprints later. Google needed a median of seven before 24,000 engineers would use it. Start where they ended up.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Before session 5</h2>
+      <span class="tag exercise">30 min</span>
+    </div>
+    <ol>
+      <li><strong>Wire the diff-scoped run into something you can repeat.</strong> A make target, an npm script, one line in a README. If running it requires remembering a flag, you will stop running it.</li>
+      <li><strong>Write your suppression list, with reasons.</strong> One line each. This file is the honest record of what you decided not to care about, and it is more useful in six months than the score ever will be.</li>
+      <li><strong>Kill two more survivors from the specification.</strong> Before you write either test, say out loud what the correct behaviour is. If you cannot say it without opening the implementation, suppress it instead and note why.</li>
+      <li><strong>Find one fault in your own history that mutation testing could never have caught.</strong> A missing branch, a misread requirement, an entire feature nobody built. Write one sentence about it. That is your personal copy of the 27 percent.</li>
+      <li><strong>Time your full suite and write the number down.</strong> Then find the single slowest test in it. Session 5 opens on that test, and on why it is probably also your flakiest.</li>
+    </ol>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions</h2>
+    </div>
+    <p>Clear all three and session 4 gets stamped in your passport.</p>
+
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · A mutant survives your suite. What have you learned?</p>
+      <button class="qopt" type="button">A · That the mutation tool generated an invalid edit and should be reconfigured</button>
+      <button class="qopt" type="button">B · That there is a bug on that line of your production code</button>
+      <button class="qopt" type="button">C · That somebody could make exactly that edit and every test would still pass</button>
+      <p class="qwhy">Your code is fine. A survivor is a hole in your tests, and that is precisely what makes it actionable in a way a coverage percentage never is.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Just et al. found a significant correlation between mutant detection and real fault detection. What is the phrase that makes the result strong?</p>
+      <button class="qopt" type="button">A · "independently of code coverage" - the signal survives once coverage is accounted for</button>
+      <button class="qopt" type="button">B · That they used five applications rather than one</button>
+      <button class="qopt" type="button">C · That the mutants were generated by common operators rather than exotic ones</button>
+      <p class="qwhy">Without that clause the result could just be that bigger suites cover more and catch more. With it, mutant detection is carrying information coverage does not have. It is also why the paper answers session 1's coverage finding so directly.</p>
+    </div>
+
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · Google's mutation system was initially rejected by its own users. What fixed it?</p>
+      <button class="qopt" type="button">A · Faster infrastructure, so full-codebase runs finished overnight</button>
+      <button class="qopt" type="button">B · Scoping to the diff plus suppression heuristics, cutting a median of 820 mutants to 7</button>
+      <button class="qopt" type="button">C · A new operator set that generated more realistic mutants</button>
+      <p class="qwhy">Developers rated 85 percent of mutants unproductive. Six years of feedback from over 20,000 developers moved the productive ratio from 15 percent to 89 percent. The technique never changed, only what it chose to show you.</p>
+    </div>
+
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ OFFICIAL COVERAGE ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Sources covered</span>
+      <h2>What this session teaches, and where it came from</h2>
+    </div>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Just, Jalali, Inozemtseva, Ernst, Holmes and Fraser, FSE 2014</span><span class="note">357 real faults, five applications, 321,000 lines. The correlation independently of coverage, the 73 percent coupling, and the 27 percent limit taught together</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google's production mutation testing paper</span><span class="note">Two billion lines, 500,000,000 tests daily, 16,935,148 mutants, 24,000+ developers, and the 15 to 89 percent productive-ratio shift</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Change-detector tests</span><span class="note">Named and taught as the failure mode of chasing a mutation score without judgement. Same Google paper</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Mutation tooling</span><span class="note">Stryker, PIT and mutmut by runtime, plus the honest cosmic-ray maintenance caveat rather than a recommendation</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Inozemtseva and Holmes, ICSE 2014</span><span class="note">Referenced as the counterpart finding. Taught in full in session 1</span></div>
+    </div>
+    <p class="mono" style="margin-top:14px">Full source map with every URL: <span class="mono">materials/official-course-map.md</span> in this repo. Certificates, videos and assessments stay with the official providers.</p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Session 4 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>What a survivor means</b><span>Not a bug in your code. A hole in your tests: that edit would ship green.</span></div>
+      <div class="cheat-item"><b>The five operator families</b><span>Boundary change, negated condition, arithmetic swap, literal change, statement deletion.</span></div>
+      <div class="cheat-item"><b>The validation</b><span>357 real faults, 321,000 lines. Significant correlation with real fault detection, independently of coverage.</span></div>
+      <div class="cheat-item"><b>The limit, said out loud</b><span>27 percent of those faults reached no mutant at all. Better proxy than coverage, still a proxy.</span></div>
+      <div class="cheat-item"><b>How to make it usable</b><span>Diff, not codebase. Suppress hard. Google went from a median of 820 mutants to 7.</span></div>
+      <div class="cheat-item"><b>Kill from the spec</b><span>If you cannot state the correct behaviour without reading the code, suppress it. Otherwise you built a change-detector.</span></div>
+    </div>
+  </section>
+
+  <div class="callout next">
+    <span class="nx-pill">Next session</span>
+    <p>You now have a survivor list you trust and a suppression file with reasons in it. None of that survives contact with a suite people have stopped believing. Session 5 goes after the slowest test you wrote down tonight, because the research says it is almost certainly your flakiest too, and you will leave with it either shrunk or quarantined on purpose.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <span>Session 4 of 6 · learn-ai-qa-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← All sessions</a> &nbsp;·&nbsp; <a href="05-flakes-and-speed.html">Next: Flakes and speed →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>
